@@ -1,0 +1,2539 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Gestione HACCP - Registro OSA v1.2</title>
+
+  <!-- PWA: installabile sul tablet e funzionante offline -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <meta name="theme-color" content="#0f1420">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Gestione HACCP">
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com/3.4.1"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            appBg: '#0f1420',
+            cardBg: '#172033',
+            cardBorder: '#233047',
+            inputBg: '#1d293d',
+            inputFocus: '#24344d',
+            sageEmerald: '#34d399',
+            sageEmeraldHover: '#10b981',
+            accentBlue: '#60a5fa',
+            accentOrange: '#fbbf24',
+            dangerRed: '#f87171',
+            textMain: '#f1f5f9',
+            textMuted: '#94a3b8'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- FontAwesome & Google Fonts -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- External Libraries: Tesseract OCR, QRCode.js -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <style>
+    :root {
+      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: #0f1420;
+      color: #f1f5f9;
+      min-height: 100vh;
+      padding-bottom: 90px;
+    }
+
+    .touch-target {
+      min-height: 48px;
+    }
+
+    /* Pulsanti a scelta singola: lo stato selezionato dipende solo dalla classe .active */
+    .pill-btn.active {
+      background-color: #10b981;
+      color: #020617;
+    }
+    .pill-btn.pill-danger.active {
+      background-color: #f43f5e;
+      color: #ffffff;
+    }
+
+    .allergen-tag.on {
+      background-color: rgba(244, 63, 94, 0.2);
+      border-color: #f43f5e;
+      color: #fda4af;
+      font-weight: 700;
+    }
+
+    .mic-pulse {
+      animation: micPulseAnim 1.2s infinite ease-in-out;
+    }
+
+    @keyframes micPulseAnim {
+      0% { transform: scale(1); color: #f87171; }
+      50% { transform: scale(1.25); color: #ef4444; }
+      100% { transform: scale(1); color: #f87171; }
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .record-annullato .record-title {
+      text-decoration: line-through;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+      }
+      body * {
+        visibility: hidden;
+      }
+      body.print-label #printable-label,
+      body.print-label #printable-label *,
+      body.print-report #report-modal-body,
+      body.print-report #report-modal-body * {
+        visibility: visible;
+      }
+      body.print-label #printable-label,
+      body.print-report #report-modal-body {
+        position: absolute;
+        left: 0;
+        top: 0;
+      }
+      body.print-label #printable-label {
+        width: var(--label-width, 54mm);
+        border: none;
+      }
+      body.print-report #report-modal-body {
+        width: 100%;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+  <style id="page-style"></style>
+</head>
+<body class="antialiased selection:bg-teal-500 selection:text-black">
+
+  <!-- DATALIST FORNITORI -->
+  <datalist id="fornitori-list">
+    <option value="CASEIFICIO MALDERA S.R.L"></option>
+    <option value="CASEIFICIO OFFICINA DEL LATTE"></option>
+    <option value="DE NICOLO PASTAI S.R.L."></option>
+    <option value="DULCIANDO SRL"></option>
+    <option value="EUROCOOP SOC. COOP. AGRICOLA A.R.L."></option>
+    <option value="GOLOSIA S.R.L."></option>
+    <option value="LIDL ITALIA SRL"></option>
+    <option value="MAIORA SPA SB"></option>
+    <option value="MARR SPA"></option>
+    <option value="METRO"></option>
+    <option value="MICMAR SRL UNIPERSONALE"></option>
+    <option value="PASTIFICIO MARIANNA SRL"></option>
+    <option value="PROGETTO CIBO S.N.C."></option>
+    <option value="TERRE AMATE S.R.L."></option>
+    <option value="TO.DI. FOOD S.R.L."></option>
+  </datalist>
+
+  <!-- DATALIST PRODOTTI MERCI IN INGRESSO -->
+  <datalist id="prodotti-list">
+    <option value="Aceto divino bianco"></option>
+    <option value="Alaccia, filetti"></option>
+    <option value="Albume d’uovo"></option>
+    <option value="Angus, carpaccio affumicato"></option>
+    <option value="Arancia, aroma"></option>
+    <option value="Baccalà, frittelle pastellate"></option>
+    <option value="Branzino, filetti"></option>
+    <option value="Calamaro, anelli"></option>
+    <option value="Capocollo pugliese/lucano, stagionato"></option>
+    <option value="Cavatelli senza glutine"></option>
+    <option value="Ceci"></option>
+    <option value="Cereali, miscela per pizza"></option>
+    <option value="Cozze, pelose"></option>
+    <option value="Cozze, sgusciate"></option>
+    <option value="Crema pasticcera a freddo"></option>
+    <option value="Datterini, pomodorini"></option>
+    <option value="Fecola di patate"></option>
+    <option value="Fiori di zucca ripieni frittelle"></option>
+    <option value="Formaggio, fresco"></option>
+    <option value="Formaggio, Grana Padano grattugiato"></option>
+    <option value="Formaggio, Pecorino romano grattugiato"></option>
+    <option value="Frutta"></option>
+    <option value="Funghi misti con porcini"></option>
+    <option value="Gamberi argentini"></option>
+    <option value="Gamberi viola"></option>
+    <option value="Gelatina in fogli"></option>
+    <option value="Girasole, olio di semi alto oleico"></option>
+    <option value="Granchio"></option>
+    <option value="Guancia di manzo cotta confit"></option>
+    <option value="Guanciale stagionato"></option>
+    <option value="Latte senza lattosio"></option>
+    <option value="Lievito fresco"></option>
+    <option value="Limone, aroma"></option>
+    <option value="Lonza, marinata affumicata"></option>
+    <option value="Maionese"></option>
+    <option value="Mandorle affettate"></option>
+    <option value="Manzo, entrecôte"></option>
+    <option value="Misto d’uovo"></option>
+    <option value="Mortadella"></option>
+    <option value="Mozzarella"></option>
+    <option value="Mozzarella, senza lattosio"></option>
+    <option value="Olio EVO 100% italiano"></option>
+    <option value="Olive nere denocciolate"></option>
+    <option value="Ombrina, filetto"></option>
+    <option value="Orecchiette, senza glutine"></option>
+    <option value="Ostriche"></option>
+    <option value="Pane tramezzini"></option>
+    <option value="Panzerottini da friggere"></option>
+    <option value="Panna senza lattosio"></option>
+    <option value="Pasta fresca"></option>
+    <option value="Pasta sfoglia"></option>
+    <option value="Patate Dippers"></option>
+    <option value="Patate novelle"></option>
+    <option value="Pesce spada, filetto"></option>
+    <option value="Pesto classico"></option>
+    <option value="Pinoli sgusciati"></option>
+    <option value="Pollo, filettino croccante"></option>
+    <option value="Polpo"></option>
+    <option value="Pomodori pelati"></option>
+    <option value="Pomodori secchi sott’olio"></option>
+    <option value="Pomodorini datterini"></option>
+    <option value="Preparato per purè di patate"></option>
+    <option value="Preparato vegetale da cucina"></option>
+    <option value="Preparato vegetale zuccherato"></option>
+    <option value="Prosciutto cotto"></option>
+    <option value="Prosciutto crudo"></option>
+    <option value="Rana pescatrice, coda"></option>
+    <option value="Ravioli vegani, senza glutine"></option>
+    <option value="Ricotta"></option>
+    <option value="Rustici vegani, senza glutine"></option>
+    <option value="Salsa barbecue"></option>
+    <option value="Salmone, filetto"></option>
+    <option value="Salsiccia casareccia dolce"></option>
+    <option value="Scampi interi"></option>
+    <option value="Scarti lavorazione pesce"></option>
+    <option value="Semola rimacinata"></option>
+    <option value="Seppie"></option>
+    <option value="Sorbetto al limone"></option>
+    <option value="Strozzapreti, senza glutine"></option>
+    <option value="Suino, bombette"></option>
+    <option value="Suino, coppa"></option>
+    <option value="Taralli all’olio d’oliva"></option>
+    <option value="Taralli, senza glutine"></option>
+    <option value="Tuorlo d’uovo"></option>
+    <option value="Verdura"></option>
+    <option value="Vongole"></option>
+    <option value="Zampina"></option>
+    <option value="Zucchero"></option>
+  </datalist>
+
+  <!-- DATALIST PREPARAZIONI / SEMILAVORATI -->
+  <datalist id="preparations-list">
+    <option value="CARPACCIO DI PESCE"></option>
+    <option value="CARPACCIO SAN MARCO MARINATO"></option>
+    <option value="CHEESECAKE"></option>
+    <option value="COSTALINE DI MAIALE"></option>
+    <option value="COSTOLETTE DI AGNELLO"></option>
+    <option value="COULIS DI AGRUMI"></option>
+    <option value="CREAM TART SALATA"></option>
+    <option value="CREMA ALLA FRUTTA"></option>
+    <option value="CREMA COTTA AL PARMIGIANO"></option>
+    <option value="CREMA DI LEGUMI E ORTAGGI"></option>
+    <option value="CREMA DI SEDANO RAPA"></option>
+    <option value="CREMA PASTICCERA"></option>
+    <option value="CREMA SALATA SPALMABILE"></option>
+    <option value="CRUMBLE"></option>
+    <option value="FILETTO DI MAIALINO LUCANO"></option>
+    <option value="FONDUTA AL PARMIGIANO"></option>
+    <option value="FRITTURA DI PESCE"></option>
+    <option value="GIRELLO DI MANZO B.T."></option>
+    <option value="GIRELLE DI PASTA ALL’UOVO"></option>
+    <option value="LONZINO DI MAIALE MARINATO"></option>
+    <option value="MARMELLATA"></option>
+    <option value="MERINGHE"></option>
+    <option value="MORBIDO DI MANZO B.T. BRASATO"></option>
+    <option value="MOUSSE CIOCCOLATO E PANNA"></option>
+    <option value="MOUSSE CON FRUTTA"></option>
+    <option value="PESCE SPADA MARINATO"></option>
+    <option value="PRODOTTI DELLA PESCA FRESCHI"></option>
+    <option value="ROSOLIO"></option>
+    <option value="ROTOLO DI PANE E CIPOLLA"></option>
+    <option value="ROTOLO DI SALMONE AFFUMICATO"></option>
+    <option value="ROYAL DI UOVA"></option>
+    <option value="SALMON MARINATO A SECCO"></option>
+    <option value="SALSA ALLO ZABAIONE"></option>
+    <option value="SELLA DI MAIALINO B.T."></option>
+    <option value="SFERE SALATE"></option>
+    <option value="STRUDEL IN PASTA FILLO"></option>
+    <option value="SUGO A BASE DI CARNE"></option>
+    <option value="SUGO A BASE DI PRODOTTI ITTICI"></option>
+    <option value="SUGO PASSATA DI POMODORO"></option>
+    <option value="TAGLIATA DI MANZO"></option>
+    <option value="TATAKI DI TONNO"></option>
+    <option value="TONNO MARINATO"></option>
+    <option value="TORTINO DI PANE"></option>
+    <option value="VELLUTATA DI VERDURE"></option>
+  </datalist>
+
+  <!-- DATALIST DESTINAZIONE / STOCCAGGIO -->
+  <datalist id="destinazioni-list">
+    <option value="Cella frigo"></option>
+    <option value="Congelatore"></option>
+    <option value="Dispensa"></option>
+  </datalist>
+
+  <!-- DATALIST DINAMICA LOTTI RICEVUTI -->
+  <datalist id="lotti-ricevuti-list"></datalist>
+
+  <div class="max-w-md md:max-w-6xl mx-auto px-4 pt-4 pb-12">
+
+    <!-- TOP APP HEADER -->
+    <header class="flex items-center justify-between bg-cardBg border border-cardBorder rounded-2xl p-3 mb-3 shadow-sm">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-teal-400/20 to-emerald-600/30 border border-teal-500/30 flex items-center justify-center text-emerald-400 text-lg shadow-inner">
+          <i class="fa-solid fa-leaf"></i>
+        </div>
+        <div>
+          <h1 id="header-company-title" class="text-base font-extrabold text-slate-100 tracking-tight leading-none">Gestione HACCP</h1>
+          <div class="flex items-center gap-1.5 mt-1">
+            <p class="text-[10px] font-semibold text-emerald-400/90 tracking-wider uppercase">Registro HACCP OSA v1.2</p>
+            <span id="autosave-status-badge" class="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[8.5px] font-bold flex items-center gap-1">
+              <i class="fa-solid fa-floppy-disk text-[8px]"></i> Auto-salvato
+            </span>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="openSettingsModal()" class="w-10 h-10 rounded-xl bg-inputBg border border-cardBorder text-slate-300 flex items-center justify-center active:scale-95 transition-transform" title="Impostazioni & Sicurezza">
+          <i class="fa-solid fa-shield-halved text-emerald-400 text-sm"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- AVVISO ARCHIVIO NON DISPONIBILE -->
+    <div id="storage-error-banner" class="bg-rose-500/10 border border-rose-500/40 rounded-xl p-2.5 mb-3 text-[11px] text-rose-300 hidden">
+      <i class="fa-solid fa-triangle-exclamation mr-1"></i>
+      <span id="storage-error-msg">Archivio del dispositivo non disponibile.</span>
+    </div>
+
+    <!-- PROMEMORIA BACKUP -->
+    <div id="backup-reminder-banner" class="bg-blue-500/10 border border-blue-500/30 rounded-xl p-2.5 mb-3 flex items-center justify-between gap-2 hidden">
+      <div class="flex items-center gap-2 text-xs text-blue-300 min-w-0">
+        <i class="fa-solid fa-hard-drive text-blue-400 text-sm flex-shrink-0"></i>
+        <span id="backup-reminder-msg" class="text-[11px]">Nessun backup recente del registro.</span>
+      </div>
+      <button onclick="exportFullBackup()" class="px-2 py-1 bg-blue-500 text-slate-950 font-bold text-[10.5px] rounded-lg active:scale-95 flex-shrink-0">Scarica backup</button>
+    </div>
+
+    <!-- DRAFT RECOVERY ALERT BANNER (SE PRESENTE BOZZA NON REGISTRATA) -->
+    <div id="draft-alert-banner" class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 mb-3 flex items-center justify-between gap-2 hidden">
+      <div class="flex items-center gap-2 text-xs text-amber-300 min-w-0">
+        <i class="fa-solid fa-clock-rotate-left text-amber-400 text-sm flex-shrink-0"></i>
+        <span class="truncate text-[11px]">Bozza dati non registrata salvata in memoria.</span>
+      </div>
+      <div class="flex items-center gap-1.5 flex-shrink-0">
+        <button onclick="restoreFormDraft()" class="px-2 py-1 bg-amber-500 text-slate-950 font-bold text-[10.5px] rounded-lg active:scale-95">Ripristina</button>
+        <button onclick="clearFormDraft()" class="px-1.5 py-1 text-slate-400 hover:text-rose-400 text-xs font-bold">&times;</button>
+      </div>
+    </div>
+
+    <!-- TOP DASHBOARD COUNTERS -->
+    <div class="grid grid-cols-3 gap-2.5 mb-4">
+      <div class="bg-cardBg border border-cardBorder rounded-xl p-2.5 text-center shadow-sm">
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Totale Lotti</div>
+        <div class="text-xl font-black text-emerald-400" id="cnt-totale">0</div>
+      </div>
+      <div class="bg-cardBg border border-cardBorder rounded-xl p-2.5 text-center shadow-sm">
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Non conformità</div>
+        <div class="text-xl font-black text-amber-400" id="cnt-anomalie">0</div>
+      </div>
+      <div class="bg-cardBg border border-cardBorder rounded-xl p-2.5 text-center shadow-sm">
+        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Oggi</div>
+        <div class="text-xl font-black text-blue-400" id="cnt-oggi">0</div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW 1: RICEVIMENTO MERCI -->
+    <div id="view-ricevimento" class="space-y-4">
+
+      <!-- QUICK ACTION BUTTONS -->
+      <div class="grid grid-cols-2 gap-2.5">
+        <button onclick="resetForm()" class="touch-target bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-500/10 active:scale-98 transition-all">
+          <i class="fa-solid fa-plus-circle text-base"></i> Nuovo Lotto
+        </button>
+        <button onclick="toggleRegistryView()" class="touch-target bg-cardBg border border-cardBorder text-slate-200 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 active:scale-98 transition-all">
+          <i class="fa-solid fa-list-check text-emerald-400"></i> Registro (HACCP)
+        </button>
+      </div>
+
+      <div class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start">
+
+      <!-- MAIN RECEIVING FORM CARD -->
+      <div class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-4">
+
+        <!-- OCR CAMERA SCANNER BANNER -->
+        <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <div class="w-10 h-10 rounded-full bg-emerald-500 text-slate-950 flex items-center justify-center font-bold text-lg flex-shrink-0">
+              <i class="fa-solid fa-camera"></i>
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-xs font-bold text-slate-100 truncate">Scansione Etichetta OCR</h3>
+              <p class="text-[10px] text-slate-400 truncate">Estrai Prodotto, Lotto e Scadenza da foto</p>
+            </div>
+          </div>
+          <button onclick="triggerOCR()" class="px-3 py-2 bg-emerald-500 text-slate-950 font-bold text-xs rounded-lg flex items-center gap-1.5 flex-shrink-0 active:scale-95 transition-transform">
+            <i class="fa-solid fa-bolt"></i> Scansiona
+          </button>
+          <input type="file" id="ocr-file-input" class="hidden" accept="image/*" capture="environment" onchange="processOCR(event)">
+        </div>
+
+        <form id="haccp-form" onsubmit="saveEntry(event)" class="space-y-3.5">
+
+          <div class="grid grid-cols-1 gap-3">
+
+            <!-- DATA RICEVIMENTO -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex justify-between">
+                <span><i class="fa-regular fa-calendar text-emerald-400 mr-1"></i> Data Ricevimento</span>
+              </label>
+              <input type="date" id="data_ricevimento" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required>
+            </div>
+
+            <!-- OPERATORE (predefinito dalle impostazioni) -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <i class="fa-solid fa-user-check text-emerald-400 mr-1"></i> Operatore Responsabile
+              </label>
+              <div class="relative flex items-center">
+                <input type="text" id="operatore" placeholder="Es. Mario Rossi" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required ondblclick="startVoice('operatore')">
+                <i class="fa-solid fa-microphone mic-icon absolute right-3 text-slate-400 text-base cursor-pointer p-1" onclick="startVoice('operatore')" title="Dettatura vocale"></i>
+              </div>
+            </div>
+
+            <!-- FORNITORE -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <i class="fa-solid fa-truck text-emerald-400 mr-1"></i> Fornitore <span class="text-[9px] text-slate-500 font-normal lowercase">(seleziona o detta)</span>
+              </label>
+              <div class="relative flex items-center">
+                <input type="text" id="fornitore" list="fornitori-list" placeholder="Seleziona o scrivi fornitore..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required ondblclick="startVoice('fornitore')">
+                <i class="fa-solid fa-microphone mic-icon absolute right-3 text-slate-400 text-base cursor-pointer p-1" onclick="startVoice('fornitore')" title="Dettatura vocale"></i>
+              </div>
+            </div>
+
+            <!-- NOME PRODOTTO -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <i class="fa-solid fa-box text-emerald-400 mr-1"></i> Nome Prodotto <span class="text-[9px] text-slate-500 font-normal lowercase">(seleziona o detta)</span>
+              </label>
+              <div class="relative flex items-center">
+                <input type="text" id="nome_prodotto" list="prodotti-list" placeholder="Seleziona o scrivi prodotto..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required ondblclick="startVoice('nome_prodotto')">
+                <i class="fa-solid fa-microphone mic-icon absolute right-3 text-slate-400 text-base cursor-pointer p-1" onclick="startVoice('nome_prodotto')" title="Dettatura vocale"></i>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2">
+              <!-- LOTTO -->
+              <div class="col-span-6 space-y-1">
+                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Lotto *
+                </label>
+                <div class="relative flex items-center">
+                  <input type="text" id="lotto" placeholder="Es. L240918-A" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-8 text-sm text-slate-100 focus:outline-none focus:border-emerald-400 font-mono" required ondblclick="startVoice('lotto')">
+                  <i class="fa-solid fa-microphone mic-icon absolute right-2 text-slate-400 text-sm cursor-pointer p-1" onclick="startVoice('lotto')"></i>
+                </div>
+              </div>
+
+              <!-- QUANTITÀ NON OBBLIGATORIA CON SELETTORE UNITÀ (Kg, N., L.) -->
+              <div class="col-span-6 space-y-1">
+                <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  Quantità <span class="text-[9px] text-slate-500 font-normal lowercase">(opzionale)</span>
+                </label>
+                <div class="flex gap-1">
+                  <div class="relative flex-1 flex items-center min-w-0">
+                    <input type="text" id="quantita" inputmode="decimal" placeholder="Es. 10" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-2 pr-6 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" ondblclick="startVoice('quantita')">
+                    <i class="fa-solid fa-microphone mic-icon absolute right-1.5 text-slate-400 text-xs cursor-pointer p-1" onclick="startVoice('quantita')"></i>
+                  </div>
+                  <select id="quantita_unita" class="touch-target bg-inputBg border border-cardBorder rounded-xl px-2 text-xs font-bold text-emerald-400 focus:outline-none focus:border-emerald-400">
+                    <option value="Kg">Kg</option>
+                    <option value="N.">N.</option>
+                    <option value="L.">L.</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <!-- SCADENZA / TMC -->
+            <div class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                <i class="fa-regular fa-clock text-emerald-400 mr-1"></i> Data Scadenza / TMC
+              </label>
+              <input type="date" id="scadenza" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required onchange="updateHaccpOutcome()">
+            </div>
+
+          </div>
+
+          <!-- CONTROLLI HACCP -->
+          <div class="pt-3 border-t border-cardBorder/70 space-y-3">
+            <div class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-clipboard-check"></i> Validazione Controlli HACCP
+            </div>
+
+            <!-- TIPOLOGIA PRODOTTO -->
+            <div class="space-y-1">
+              <div class="text-[10px] font-bold text-slate-400 uppercase">1. Tipologia</div>
+              <div class="grid grid-cols-3 gap-1.5 p-1 bg-inputBg border border-cardBorder rounded-xl">
+                <button type="button" data-value="Fresco" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400 transition-colors active" onclick="setPill(this, 'tipo_prodotto', 'Fresco')">Fresco</button>
+                <button type="button" data-value="Surgelato" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400 transition-colors" onclick="setPill(this, 'tipo_prodotto', 'Surgelato')">Surgelato</button>
+                <button type="button" data-value="Secco" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400 transition-colors" onclick="setPill(this, 'tipo_prodotto', 'Secco')">Secco</button>
+              </div>
+              <input type="hidden" id="tipo_prodotto" value="Fresco">
+            </div>
+
+            <!-- TEMPERATURA MISURATA -->
+            <div class="space-y-1">
+              <div class="text-[10px] font-bold text-slate-400 uppercase flex justify-between">
+                <span>2. Temperatura misurata (sonda) °C</span>
+                <span id="temp-limit-hint" class="normal-case font-semibold text-slate-500"></span>
+              </div>
+              <div class="flex gap-1.5">
+                <input type="text" id="temp_valore" inputmode="decimal" placeholder="Es. 3,2" autocomplete="off" class="touch-target w-28 bg-inputBg border border-cardBorder rounded-xl px-3 text-sm font-bold text-slate-100 focus:outline-none focus:border-emerald-400" oninput="updateHaccpOutcome()">
+                <div class="flex-1 grid grid-cols-3 gap-1.5">
+                  <button type="button" class="py-2 bg-inputBg border border-cardBorder rounded-xl text-xs font-bold text-slate-300 active:scale-95" onclick="setTempQuick('+2.0')">+2.0</button>
+                  <button type="button" class="py-2 bg-inputBg border border-cardBorder rounded-xl text-xs font-bold text-slate-300 active:scale-95" onclick="setTempQuick('+4.0')">+4.0</button>
+                  <button type="button" class="py-2 bg-inputBg border border-cardBorder rounded-xl text-xs font-bold text-slate-300 active:scale-95" onclick="setTempQuick('-18.0')">-18.0</button>
+                </div>
+              </div>
+              <div id="temp-esito" class="text-[11px] font-bold"></div>
+            </div>
+
+            <!-- INTEGRITÀ IMBALLO -->
+            <div class="space-y-1">
+              <div class="text-[10px] font-bold text-slate-400 uppercase">3. Integrità Imballo</div>
+              <div class="grid grid-cols-2 gap-1.5 p-1 bg-inputBg border border-cardBorder rounded-xl">
+                <button type="button" data-value="Conforme" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400 transition-colors active" onclick="setPill(this, 'integrita', 'Conforme')">✓ Conforme</button>
+                <button type="button" data-value="Anomalia" class="pill-btn pill-danger py-2 text-xs font-bold rounded-lg text-slate-400 transition-colors" onclick="setPill(this, 'integrita', 'Anomalia')">⚠ Anomalia</button>
+              </div>
+              <input type="hidden" id="integrita" value="Conforme">
+            </div>
+
+            <!-- DESTINAZIONE & NOTE -->
+            <div class="space-y-2 pt-1">
+              <div class="space-y-1">
+                <label class="text-[10px] font-bold text-slate-400 uppercase">Destinazione / Stoccaggio</label>
+                <div class="relative flex items-center">
+                  <input type="text" id="destinazione" list="destinazioni-list" placeholder="Seleziona (Cella frigo, Congelatore, Dispensa)..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-9 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" ondblclick="startVoice('destinazione')">
+                  <i class="fa-solid fa-microphone mic-icon absolute right-2.5 text-slate-400 text-sm cursor-pointer p-1" onclick="startVoice('destinazione')" title="Dettatura vocale"></i>
+                </div>
+              </div>
+              <div class="space-y-1">
+                <label id="note-label" class="text-[10px] font-bold text-slate-400 uppercase">Note / Azioni Correttive</label>
+                <div class="relative flex items-center">
+                  <input type="text" id="note" placeholder="Note / Azioni Correttive" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-9 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" ondblclick="startVoice('note')">
+                  <i class="fa-solid fa-microphone mic-icon absolute right-2.5 text-slate-400 text-sm cursor-pointer p-1" onclick="startVoice('note')"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- ESITO COMPLESSIVO -->
+            <div id="haccp-outcome" class="hidden text-[11px] font-semibold rounded-xl p-2.5 border"></div>
+
+          </div>
+
+          <button type="submit" class="touch-target w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-98 transition-all pt-1">
+            <i class="fa-solid fa-floppy-disk text-base"></i> REGISTRA ACCETTAZIONE
+          </button>
+
+        </form>
+      </div>
+
+      <!-- REGISTRY CARDS VIEW SECTION (sempre visibile su tablet) -->
+      <div id="registry-card-section" class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-3 hidden md:block md:sticky md:top-4">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <h2 class="text-sm font-extrabold text-slate-100 flex items-center gap-1.5">
+            <i class="fa-solid fa-database text-emerald-400"></i> Registro
+          </h2>
+          <div class="flex items-center gap-1.5">
+            <button onclick="shareFullRegistryEmail()" class="px-2 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold active:scale-95">
+              <i class="fa-solid fa-envelope"></i> Email
+            </button>
+            <button onclick="exportCSV()" class="px-2 py-1.5 bg-slate-700 text-slate-200 border border-slate-600 rounded-lg text-xs font-bold active:scale-95">
+              CSV
+            </button>
+            <button onclick="exportExcel()" class="px-2.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
+              <i class="fa-solid fa-file-excel"></i> Excel (.xls)
+            </button>
+          </div>
+        </div>
+
+        <div class="flex gap-2 items-center">
+          <input type="text" id="search-input" placeholder="🔍 Cerca Prodotto, Fornitore o Lotto..." class="touch-target flex-1 bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" oninput="renderRegistry()">
+          <label class="text-[10.5px] text-slate-400 flex items-center gap-1 whitespace-nowrap select-none">
+            <input type="checkbox" id="show-annullati" onchange="renderRegistry()"> Annullati
+          </label>
+        </div>
+
+        <div id="registry-list" class="space-y-2.5 max-h-[500px] md:max-h-[calc(100vh-300px)] overflow-y-auto pr-1"></div>
+      </div>
+
+      </div>
+
+    </div>
+
+    <!-- MAIN VIEW 2: STAMPA ETICHETTE LAVORATI -->
+    <div id="view-etichette" class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start hidden">
+
+      <div class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-4">
+        <h2 class="text-sm font-extrabold text-slate-100 flex items-center gap-2 border-b border-cardBorder pb-2.5">
+          <i class="fa-solid fa-tags text-emerald-400"></i> Etichettatura Semilavorati / Preparazioni
+        </h2>
+
+        <form id="label-form" onsubmit="generateLabelPreview(event)" class="space-y-3.5">
+
+          <!-- NOME PREPARAZIONE / SEMILAVORATO -->
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Nome Preparazione / Semilavorato *</label>
+            <div class="relative flex items-center">
+              <input type="text" id="lbl_nome" list="preparations-list" placeholder="Seleziona o scrivi ricetta..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400 uppercase" required ondblclick="startVoice('lbl_nome')">
+              <i class="fa-solid fa-microphone mic-icon absolute right-3 text-slate-400 text-base cursor-pointer p-1" onclick="startVoice('lbl_nome')"></i>
+            </div>
+          </div>
+
+          <!-- LOTTO INTERNO GENERATO -->
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Lotto Interno (progressivo del giorno)</label>
+            <input type="text" id="lbl_lotto_interno" readonly class="touch-target w-full bg-appBg border border-cardBorder rounded-xl px-3 text-xs font-mono font-bold text-emerald-400">
+          </div>
+
+          <!-- SEZIONE LOTTI MULTIPLI MATERIE PRIME DI ORIGINE -->
+          <div class="space-y-2 p-3 bg-appBg/60 border border-cardBorder/80 rounded-xl">
+            <div class="flex items-center justify-between">
+              <label class="text-[11px] font-bold text-emerald-400 uppercase tracking-wide flex items-center gap-1.5">
+                <i class="fa-solid fa-boxes-stacked text-xs"></i> Lotti Materie Prime Origine
+              </label>
+              <span class="text-[9px] text-slate-400 font-normal">Auto-ricerca da Ricevimento</span>
+            </div>
+
+            <!-- CAMPO INPUT E AGGIUNTA LOTTO SINGOLO -->
+            <div class="grid grid-cols-12 gap-1.5">
+              <div class="col-span-5 relative flex items-center">
+                <input type="text" id="input_add_lotto_code" list="lotti-ricevuti-list" placeholder="Codice Lotto..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-2 pr-7 text-xs text-slate-100 focus:outline-none focus:border-emerald-400 font-mono" oninput="autoFetchProductNameForAdd(this.value)" ondblclick="startVoice('input_add_lotto_code')">
+                <i class="fa-solid fa-microphone mic-icon absolute right-1.5 text-slate-400 text-xs cursor-pointer p-1" onclick="startVoice('input_add_lotto_code')"></i>
+              </div>
+              <div class="col-span-5 relative flex items-center">
+                <input type="text" id="input_add_lotto_name" list="prodotti-list" placeholder="Nome Materia Prima..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-2 pr-7 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" ondblclick="startVoice('input_add_lotto_name')">
+                <i class="fa-solid fa-microphone mic-icon absolute right-1.5 text-slate-400 text-xs cursor-pointer p-1" onclick="startVoice('input_add_lotto_name')"></i>
+              </div>
+              <div class="col-span-2">
+                <button type="button" onclick="addOriginRawMaterial()" class="touch-target w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black rounded-xl text-base flex items-center justify-center active:scale-95 shadow-md">
+                  <i class="fa-solid fa-plus"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- LISTA DINAMICA DELLE MATERIE PRIME AGGIUNTE -->
+            <div id="origin-lots-container" class="space-y-1.5 pt-1"></div>
+            <div id="origin-lots-empty-msg" class="text-[10.5px] text-slate-500 italic text-center py-1">
+              Nessun lotto ancora aggiunto. Aggiungi i lotti degli ingredienti usati.
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Data Preparazione</label>
+            <input type="date" id="lbl_data_prod" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required onchange="generateInternalBatchCode()">
+          </div>
+
+          <!-- RAPID SCADENZA BUTTONS -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Data di Scadenza (Rapido)</label>
+            <input type="date" id="lbl_data_scad" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required>
+
+            <div class="flex gap-1.5 overflow-x-auto no-scrollbar pt-1 pb-0.5">
+              <button type="button" onclick="addDaysToTMC(1)" class="px-2.5 py-1.5 bg-inputBg border border-cardBorder rounded-lg text-xs font-bold text-slate-300 hover:text-emerald-400 active:scale-95 whitespace-nowrap">+1G</button>
+              <button type="button" onclick="addDaysToTMC(2)" class="px-2.5 py-1.5 bg-inputBg border border-cardBorder rounded-lg text-xs font-bold text-slate-300 hover:text-emerald-400 active:scale-95 whitespace-nowrap">+2G</button>
+              <button type="button" onclick="addDaysToTMC(3)" class="px-2.5 py-1.5 bg-inputBg border border-cardBorder rounded-lg text-xs font-bold text-slate-300 hover:text-emerald-400 active:scale-95 whitespace-nowrap">+3G</button>
+              <button type="button" onclick="addDaysToTMC(5)" class="px-2.5 py-1.5 bg-inputBg border border-cardBorder rounded-lg text-xs font-bold text-slate-300 hover:text-emerald-400 active:scale-95 whitespace-nowrap">+5G</button>
+              <button type="button" onclick="addDaysToTMC(7)" class="px-2.5 py-1.5 bg-inputBg border border-cardBorder rounded-lg text-xs font-bold text-slate-300 hover:text-emerald-400 active:scale-95 whitespace-nowrap">+7G</button>
+              <button type="button" onclick="addDaysToTMC(30)" class="px-2.5 py-1.5 bg-inputBg border border-cardBorder rounded-lg text-xs font-bold text-slate-300 hover:text-emerald-400 active:scale-95 whitespace-nowrap">+30G</button>
+              <button type="button" onclick="addDaysToTMC(90)" class="px-2.5 py-1.5 bg-inputBg border border-cardBorder rounded-lg text-xs font-bold text-slate-300 hover:text-emerald-400 active:scale-95 whitespace-nowrap">+90G ❄️</button>
+            </div>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Conservazione</label>
+            <select id="lbl_conservazione" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+              <option value="Da conservare in frigo a +2°C / +4°C">Frigo (+2°C / +4°C)</option>
+              <option value="Congelato a -18°C">Congelato (-18°C)</option>
+              <option value="Temperatura Ambiente">Temp. Ambiente</option>
+            </select>
+          </div>
+
+          <div class="space-y-1">
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Operatore Lavorazione</label>
+            <div class="relative flex items-center">
+              <input type="text" id="lbl_operatore" placeholder="Es. Mario Rossi" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-9 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" ondblclick="startVoice('lbl_operatore')">
+              <i class="fa-solid fa-microphone mic-icon absolute right-2.5 text-slate-400 text-sm cursor-pointer p-1" onclick="startVoice('lbl_operatore')"></i>
+            </div>
+          </div>
+
+          <!-- ALLERGENS PILL SELECTOR (14 allergeni, Allegato II Reg. UE 1169/2011) -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Allergeni Presenti (Reg. UE 1169/2011)</label>
+            <div class="flex flex-wrap gap-1.5" id="allergens-selector"></div>
+          </div>
+
+          <button type="submit" class="touch-target w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-98 transition-all">
+            <i class="fa-solid fa-eye"></i> ANTEPRIMA ETICHETTA
+          </button>
+        </form>
+      </div>
+
+      <!-- THERMAL LABEL PREVIEW PREPARED -->
+      <div id="label-output-wrapper" class="space-y-3 hidden md:sticky md:top-4">
+        <div class="bg-slate-200 text-slate-950 p-4 rounded-2xl border-2 border-dashed border-slate-400 w-[270px] mx-auto shadow-2xl">
+          <div class="thermal-label bg-white p-3 border border-black font-mono text-[11px] leading-tight text-slate-950" id="printable-label">
+            <div class="text-center border-b-2 border-black pb-1 mb-1.5">
+              <div class="font-black text-xs uppercase tracking-tight" id="lbl-company-header">GESTIONE HACCP</div>
+              <div class="text-[8px] uppercase tracking-wider font-bold">Autocontrollo HACCP</div>
+            </div>
+            <div class="font-black text-xs uppercase my-1 break-words text-center" id="out-lbl-nome">NOME PRODOTTO</div>
+            <div class="flex justify-between my-0.5">
+              <span>LOTTO INT:</span>
+              <strong id="out-lbl-lotto" class="font-bold">-</strong>
+            </div>
+            <div class="my-0.5 border-t border-b border-black/20 py-0.5 text-[9.5px]">
+              <div class="font-bold uppercase text-[9px] mb-0.5">MATERIE PRIME DI ORIGINE:</div>
+              <div id="out-lbl-orig-list" class="space-y-0.5 font-bold text-[9.5px]"></div>
+            </div>
+            <div class="flex justify-between my-0.5">
+              <span>PREPARATO IL:</span>
+              <span id="out-lbl-prod">-</span>
+            </div>
+            <div class="flex justify-between my-0.5">
+              <span>SCADENZA:</span>
+              <strong id="out-lbl-scad" class="font-bold">-</strong>
+            </div>
+            <div class="flex justify-between my-0.5">
+              <span>CONS:</span>
+              <span id="out-lbl-cons" class="text-[9px] text-right">-</span>
+            </div>
+            <div class="flex justify-between my-0.5">
+              <span>OP:</span>
+              <span id="out-lbl-op" class="text-[9px]">-</span>
+            </div>
+            <div class="mt-1.5 pt-1 border-t border-dashed border-black text-[9.5px]" id="out-lbl-allergens">
+              ALLERGENI: Nessuno dichiarato
+            </div>
+            <div class="flex justify-center mt-2">
+              <div id="qrcode"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <button onclick="printLabel()" class="touch-target bg-emerald-500 text-slate-950 font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 active:scale-98 shadow-md">
+            <i class="fa-solid fa-print"></i> STAMPA TERMICA (<span id="lbl-width-text">58</span>mm)
+          </button>
+          <button onclick="saveInternalPreparation()" class="touch-target bg-cardBg border border-cardBorder text-slate-200 font-bold text-sm rounded-xl flex items-center justify-center gap-2 active:scale-98">
+            <i class="fa-solid fa-floppy-disk text-emerald-400"></i> SALVA IN REGISTRO
+          </button>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- FIXED BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-0 right-0 bg-cardBg/95 backdrop-blur-md border-t border-cardBorder px-6 py-2.5 z-40 no-print">
+    <div class="max-w-lg mx-auto grid grid-cols-2 gap-3">
+      <button id="tab-ricevimento-btn" onclick="switchTab('ricevimento')" class="touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 transition-all">
+        <i class="fa-solid fa-truck-ramp-box text-base"></i> Ricevimento
+      </button>
+      <button id="tab-etichette-btn" onclick="switchTab('etichette')" class="touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-slate-400 bg-transparent transition-all">
+        <i class="fa-solid fa-print text-base"></i> Stampa Etichette
+      </button>
+    </div>
+  </nav>
+
+  <!-- BOTTOM TOAST NOTIFICATION -->
+  <div id="app-dialog" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-cardBg border border-emerald-500/50 text-slate-100 px-4 py-2.5 rounded-xl shadow-2xl z-[80] flex items-center gap-2.5 text-xs font-semibold opacity-0 pointer-events-none transition-all duration-300 translate-y-4">
+    <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+    <span id="app-dialog-msg">Operazione completata</span>
+  </div>
+
+  <!-- PRIMO AVVIO: SCELTA DEL NOME DELL'ATTIVITÀ -->
+  <div class="fixed inset-0 bg-appBg/95 backdrop-blur-sm z-[70] flex items-center justify-center p-4 hidden" id="setup-modal">
+    <form onsubmit="completeSetup(event)" class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-5 space-y-4 shadow-2xl">
+      <div class="text-center space-y-1.5">
+        <div class="w-12 h-12 mx-auto rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl">
+          <i class="fa-solid fa-leaf"></i>
+        </div>
+        <h2 class="text-base font-extrabold text-slate-100">Benvenuto in Gestione HACCP</h2>
+        <p class="text-[11px] text-slate-400 leading-normal">
+          Prima configurazione di questo tablet. Il nome dell'attività comparirà nell'intestazione, sulle etichette, nelle schede audit e negli export. Potrai cambiarlo in seguito dalle Impostazioni.
+        </p>
+      </div>
+
+      <div class="space-y-1">
+        <label class="text-[10px] font-bold text-slate-400 uppercase">Nome attività / Ragione sociale *</label>
+        <input type="text" id="setup-company-name" required maxlength="80" placeholder="Es. Ristorante Da Mario" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-400">
+      </div>
+      <div class="space-y-1">
+        <label class="text-[10px] font-bold text-slate-400 uppercase">Operatore predefinito <span class="normal-case font-normal text-slate-500">(opzionale)</span></label>
+        <input type="text" id="setup-operator" maxlength="60" placeholder="Es. Mario Rossi" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-400">
+      </div>
+      <div class="space-y-1">
+        <label class="text-[10px] font-bold text-slate-400 uppercase">Email consulente HACCP <span class="normal-case font-normal text-slate-500">(opzionale)</span></label>
+        <input type="email" id="setup-email" placeholder="es. consulente@esempio.it" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-sm text-slate-100 focus:outline-none focus:border-emerald-400">
+      </div>
+
+      <button type="submit" class="touch-target w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 active:scale-98">
+        <i class="fa-solid fa-check"></i> INIZIA
+      </button>
+      <button type="button" onclick="triggerImportJSON()" class="w-full py-2 text-[11px] font-bold text-blue-300 flex items-center justify-center gap-1.5">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Hai un backup? Ripristina da file (.json)
+      </button>
+    </form>
+  </div>
+
+  <!-- SETTINGS & DATA SECURITY MODAL -->
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200" id="settings-modal">
+    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-cardBorder pb-2">
+        <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-shield-halved text-emerald-400"></i> Impostazioni & Sicurezza Dati
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 text-lg px-1">&times;</button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase">Nome attività / Ragione sociale</label>
+          <input type="text" id="cfg-company-name" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase">Operatore predefinito</label>
+          <input type="text" id="cfg-default-operator" placeholder="Es. Mario Rossi" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+        </div>
+        <div class="space-y-1">
+          <label class="text-[10px] font-bold text-slate-400 uppercase">Email Consulente HACCP / Admin</label>
+          <input type="email" id="cfg-default-email" placeholder="es. consulente@esempio.it" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Etichetta</label>
+            <select id="cfg-label-width" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+              <option value="58">58 mm</option>
+              <option value="80">80 mm</option>
+            </select>
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Max Fresco °C</label>
+            <input type="text" inputmode="decimal" id="cfg-temp-fresco" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+          </div>
+          <div class="space-y-1">
+            <label class="text-[10px] font-bold text-slate-400 uppercase">Max Surgel. °C</label>
+            <input type="text" inputmode="decimal" id="cfg-temp-surgelato" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-2 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+          </div>
+        </div>
+      </div>
+
+      <!-- SEZIONE DEDICATA BACKUP E RIPRISTINO SICUREZZA DATI -->
+      <div class="pt-3 border-t border-cardBorder space-y-2">
+        <div class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-floppy-disk"></i> Archivio sul tablet & Backup
+        </div>
+        <p class="text-[10.5px] text-slate-400 leading-normal">
+          Il registro è memorizzato nell'archivio interno di questo tablet (IndexedDB). Non viene inviato a nessun server.
+          Scarica periodicamente un backup (.json): il file finisce nella cartella Download del tablet e permette il ripristino in caso di guasto o reinstallazione.
+        </p>
+        <div id="storage-status" class="text-[10.5px] text-slate-300 bg-appBg/60 border border-cardBorder rounded-lg p-2 leading-relaxed"></div>
+
+        <div class="grid grid-cols-1 gap-2 pt-1">
+          <button onclick="exportFullBackup()" class="w-full py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+            <i class="fa-solid fa-cloud-arrow-down text-sm"></i> Scarica Backup Completo (.json)
+          </button>
+
+          <button onclick="triggerImportJSON()" class="w-full py-2.5 bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+            <i class="fa-solid fa-cloud-arrow-up text-sm"></i> Ripristina da File Backup (.json)
+          </button>
+          <input type="file" id="import-file-input" class="hidden" accept=".json,application/json" onchange="importFullBackup(event)">
+
+          <button onclick="clearAllDataSafely()" class="w-full py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-trash-arrow-up"></i> Svuota Registro Dati
+          </button>
+        </div>
+      </div>
+
+      <button onclick="saveSettings()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
+        <i class="fa-solid fa-check"></i> SALVA IMPOSTAZIONI
+      </button>
+    </div>
+  </div>
+
+  <!-- AUDIT REPORT MODAL -->
+  <div class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200" id="report-modal">
+    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-cardBorder pb-2 no-print">
+        <h3 class="text-xs font-bold text-slate-100">Scheda Audit Rintracciabilità</h3>
+        <button onclick="closeReportModal()" class="text-slate-400 text-lg px-1">&times;</button>
+      </div>
+
+      <div id="report-modal-body" class="bg-white text-slate-950 p-3 rounded-xl text-xs space-y-2"></div>
+
+      <div class="flex flex-wrap gap-1.5 pt-1 no-print">
+        <button onclick="shareSingleWhatsApp()" class="flex-1 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-xs rounded-lg flex items-center justify-center gap-1 active:scale-95">
+          <i class="fa-brands fa-whatsapp"></i> WhatsApp
+        </button>
+        <button onclick="shareSingleEmail()" class="flex-1 py-2 bg-blue-500/20 text-blue-400 border border-blue-500/30 font-bold text-xs rounded-lg flex items-center justify-center gap-1 active:scale-95">
+          <i class="fa-solid fa-envelope"></i> Email
+        </button>
+        <button onclick="printReport()" class="w-full py-2 bg-inputBg border border-cardBorder text-slate-200 font-bold text-xs rounded-lg flex items-center justify-center gap-1 active:scale-95">
+          <i class="fa-solid fa-print"></i> Stampa Scheda
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const APP_VERSION = '1.2';
+
+    /* 14 allergeni dell'Allegato II del Reg. UE 1169/2011 */
+    const ALLERGENI = [
+      'Glutine', 'Crostacei', 'Uova', 'Pesce', 'Arachidi', 'Soia', 'Latte (lattosio)',
+      'Frutta a guscio', 'Sedano', 'Senape', 'Sesamo', 'Solfiti', 'Lupini', 'Molluschi'
+    ];
+
+    const DEFAULT_CONFIG = {
+      companyName: '',
+      defaultOperator: '',
+      defaultEmail: '',
+      labelWidth: '58',
+      tempMaxFresco: 4,
+      tempMaxSurgelato: -15
+    };
+
+    /* STATO APPLICAZIONE (caricato dall'archivio del tablet all'avvio) */
+    let registryData = [];
+    let companyConfig = { ...DEFAULT_CONFIG };
+    let appMeta = {};
+    let activeAllergens = [];
+    let currentSelectedReport = null;
+    let addedOriginRawMaterials = [];
+
+    /* ===== ARCHIVIO LOCALE DEL DISPOSITIVO (IndexedDB, con ripiego su localStorage) ===== */
+    const DB_NAME = 'gestione_haccp';
+    const DB_STORE = 'kv';
+    const LS_PREFIX = 'gestione_haccp_';
+    let dbPromise = null;
+    let useLocalStorageFallback = false;
+    const DB_OPEN_TIMEOUT_MS = 6000;
+
+    /* Archivio presente ma bloccato: non si ripiega su localStorage,
+       altrimenti i dati finirebbero divisi in due archivi diversi */
+    function dbBlockedError() {
+      const err = new Error("l'archivio del tablet non risponde");
+      err.code = 'DB_BLOCKED';
+      return err;
+    }
+
+    function openDb() {
+      if (dbPromise) return dbPromise;
+      dbPromise = new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) {
+          reject(new Error('IndexedDB non disponibile'));
+          return;
+        }
+        const timer = setTimeout(() => {
+          dbPromise = null;
+          reject(dbBlockedError());
+        }, DB_OPEN_TIMEOUT_MS);
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(DB_STORE)) db.createObjectStore(DB_STORE);
+        };
+        req.onsuccess = () => {
+          clearTimeout(timer);
+          resolve(req.result);
+        };
+        req.onerror = () => {
+          clearTimeout(timer);
+          reject(req.error);
+        };
+      });
+      return dbPromise;
+    }
+
+    async function storeGet(key) {
+      if (!useLocalStorageFallback) {
+        try {
+          const db = await openDb();
+          return await new Promise((resolve, reject) => {
+            const r = db.transaction(DB_STORE, 'readonly').objectStore(DB_STORE).get(key);
+            r.onsuccess = () => resolve(r.result);
+            r.onerror = () => reject(r.error);
+          });
+        } catch (e) {
+          if (e && e.code === 'DB_BLOCKED') throw e;
+          enableLocalStorageFallback(e);
+        }
+      }
+      try {
+        const raw = localStorage.getItem(LS_PREFIX + key);
+        return raw ? JSON.parse(raw) : undefined;
+      } catch (e) {
+        return undefined;
+      }
+    }
+
+    async function storeSet(key, value) {
+      if (!useLocalStorageFallback) {
+        try {
+          const db = await openDb();
+          await new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE, 'readwrite');
+            tx.objectStore(DB_STORE).put(value, key);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => reject(tx.error);
+            tx.onabort = () => reject(tx.error);
+          });
+          return;
+        } catch (e) {
+          if (e && e.code === 'DB_BLOCKED') throw e;
+          enableLocalStorageFallback(e);
+        }
+      }
+      localStorage.setItem(LS_PREFIX + key, JSON.stringify(value));
+    }
+
+    async function storeDelete(key) {
+      try { localStorage.removeItem(LS_PREFIX + key); } catch (e) {}
+      if (useLocalStorageFallback) return;
+      try {
+        const db = await openDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(DB_STORE, 'readwrite');
+          tx.objectStore(DB_STORE).delete(key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+      } catch (e) {}
+    }
+
+    function enableLocalStorageFallback(err) {
+      if (useLocalStorageFallback) return;
+      useLocalStorageFallback = true;
+      console.warn('IndexedDB non utilizzabile, uso localStorage', err);
+      showStorageError("Archivio IndexedDB non disponibile: uso la memoria ridotta del browser. Scarica spesso il backup.");
+    }
+
+    function showStorageError(msg) {
+      document.getElementById('storage-error-msg').innerText = msg;
+      document.getElementById('storage-error-banner').classList.remove('hidden');
+    }
+
+    async function persistRegistry() {
+      try {
+        await storeSet('registry', registryData);
+        return true;
+      } catch (e) {
+        showStorageError("ATTENZIONE: salvataggio del registro non riuscito (" + (e && e.message ? e.message : e) + "). Scarica subito un backup.");
+        return false;
+      }
+    }
+
+    async function persistConfig() {
+      try { await storeSet('config', companyConfig); } catch (e) {}
+    }
+
+    async function persistMeta() {
+      try { await storeSet('meta', appMeta); } catch (e) {}
+    }
+
+    async function loadAllData() {
+      const reg = await storeGet('registry');
+      registryData = Array.isArray(reg) ? reg.map(normalizeRecord) : [];
+
+      const cfg = await storeGet('config');
+      companyConfig = { ...DEFAULT_CONFIG, ...(cfg || {}) };
+
+      appMeta = (await storeGet('meta')) || {};
+    }
+
+    /* Completa i record creati con versioni precedenti */
+    function normalizeRecord(r) {
+      const rec = { ...r };
+      if (!rec.stato) rec.stato = 'attivo';
+      if (!rec.temp_esito) rec.temp_esito = 'N.D.';
+      return rec;
+    }
+
+    async function requestPersistentStorage() {
+      try {
+        if (navigator.storage && navigator.storage.persist) {
+          const already = await navigator.storage.persisted();
+          if (!already) await navigator.storage.persist();
+        }
+      } catch (e) {}
+    }
+
+    async function renderStorageStatus() {
+      const box = document.getElementById('storage-status');
+      let persisted = null;
+      let usageTxt = 'n.d.';
+      try {
+        if (navigator.storage && navigator.storage.persisted) persisted = await navigator.storage.persisted();
+        if (navigator.storage && navigator.storage.estimate) {
+          const est = await navigator.storage.estimate();
+          usageTxt = `${(est.usage / 1024).toFixed(0)} KB usati`;
+        }
+      } catch (e) {}
+
+      const persistTxt = persisted === true
+        ? '<span class="text-emerald-400 font-bold">Sì</span>'
+        : persisted === false
+          ? '<span class="text-amber-400 font-bold">No</span> (installa l\'app sulla schermata Home)'
+          : 'n.d.';
+      const lastBackup = appMeta.lastBackup ? formatDateTime(appMeta.lastBackup) : '<span class="text-amber-400">mai</span>';
+      const activeCount = registryData.filter(isActive).length;
+
+      box.innerHTML = `
+        Archivio: <strong>${useLocalStorageFallback ? 'localStorage (ridotto)' : 'IndexedDB del tablet'}</strong> · ${usageTxt}<br>
+        Protetto dalla pulizia automatica: ${persistTxt}<br>
+        Record: <strong>${registryData.length}</strong> (${activeCount} attivi) · Ultimo backup: <strong>${lastBackup}</strong>
+      `;
+    }
+
+    function registerServiceWorker() {
+      const secure = location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname);
+      if ('serviceWorker' in navigator && secure) {
+        navigator.serviceWorker.register('sw.js').catch(err => console.warn('Service worker non registrato', err));
+      }
+    }
+
+    /* ===== AVVIO ===== */
+    document.addEventListener('DOMContentLoaded', init);
+
+    async function init() {
+      const today = todayLocal();
+      document.getElementById('data_ricevimento').value = today;
+      document.getElementById('lbl_data_prod').value = today;
+      renderAllergenSelector();
+
+      let storageOk = true;
+      try {
+        await loadAllData();
+      } catch (e) {
+        storageOk = false;
+        showStorageError(e && e.code === 'DB_BLOCKED'
+          ? "L'archivio del tablet non risponde. Chiudi completamente l'app e riaprila (se persiste, riavvia il tablet). Non registrare dati finché questo avviso è visibile."
+          : "Impossibile leggere l'archivio del tablet: " + (e && e.message ? e.message : e));
+      }
+
+      applyCompanyConfig();
+      applyDefaultOperator();
+      generateInternalBatchCode();
+      updateMetrics();
+      renderRegistry();
+      refreshIncomingLotDatalist();
+      renderOriginRawMaterials();
+      updateHaccpOutcome();
+
+      initAutoSaveEngine();
+      registerServiceWorker();
+      if (!storageOk) return;
+
+      await checkSavedDrafts();
+      await restoreLabelDraft();
+      checkBackupReminder();
+      if (!companyConfig.companyName) openSetupModal();
+
+      requestPersistentStorage();
+    }
+
+    /* ===== DATE IN ORA LOCALE (non UTC) ===== */
+    function pad2(n) {
+      return String(n).padStart(2, '0');
+    }
+
+    function toLocalISO(d) {
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+    }
+
+    function todayLocal() {
+      return toLocalISO(new Date());
+    }
+
+    function parseLocalDate(s) {
+      const [y, m, d] = String(s).split('-').map(Number);
+      return new Date(y, m - 1, d);
+    }
+
+    /* ===== AUTO-SALVATAGGIO BOZZE ===== */
+    function initAutoSaveEngine() {
+      const haccpForm = document.getElementById('haccp-form');
+      haccpForm.addEventListener('input', debounceAutoSave);
+      haccpForm.addEventListener('change', debounceAutoSave);
+
+      const labelForm = document.getElementById('label-form');
+      labelForm.addEventListener('input', debounceLabelDraft);
+      labelForm.addEventListener('change', debounceLabelDraft);
+
+      // Su tablet l'app passa in background più spesso di quanto venga chiusa
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          saveFormDraftSilent();
+          saveLabelDraft();
+        }
+      });
+      window.addEventListener('beforeunload', () => {
+        saveFormDraftSilent();
+        saveLabelDraft();
+      });
+    }
+
+    let autoSaveTimeout = null;
+    function debounceAutoSave() {
+      showAutoSaveBadge(false);
+      clearTimeout(autoSaveTimeout);
+      autoSaveTimeout = setTimeout(saveFormDraftSilent, 500);
+    }
+
+    function collectFormDraft() {
+      return {
+        data_ricevimento: document.getElementById('data_ricevimento').value,
+        operatore: document.getElementById('operatore').value,
+        fornitore: document.getElementById('fornitore').value,
+        nome_prodotto: document.getElementById('nome_prodotto').value,
+        lotto: document.getElementById('lotto').value,
+        quantita: document.getElementById('quantita').value,
+        quantita_unita: document.getElementById('quantita_unita').value,
+        scadenza: document.getElementById('scadenza').value,
+        tipo_prodotto: document.getElementById('tipo_prodotto').value,
+        temp_valore: document.getElementById('temp_valore').value,
+        integrita: document.getElementById('integrita').value,
+        destinazione: document.getElementById('destinazione').value,
+        note: document.getElementById('note').value,
+        timestamp: Date.now()
+      };
+    }
+
+    function saveFormDraftSilent() {
+      const draft = collectFormDraft();
+
+      // Salva bozza solo se almeno un campo rilevante è compilato
+      if (draft.fornitore || draft.nome_prodotto || draft.lotto) {
+        storeSet('draft', draft).then(() => showAutoSaveBadge(true)).catch(() => {});
+      } else {
+        showAutoSaveBadge(true);
+      }
+    }
+
+    async function checkSavedDrafts() {
+      const draft = await storeGet('draft');
+      if (draft && (draft.fornitore || draft.nome_prodotto || draft.lotto)) {
+        document.getElementById('draft-alert-banner').classList.remove('hidden');
+      }
+    }
+
+    async function restoreFormDraft() {
+      const draft = await storeGet('draft');
+      if (!draft) return;
+
+      const fields = ['data_ricevimento', 'operatore', 'fornitore', 'nome_prodotto', 'lotto', 'quantita', 'quantita_unita', 'scadenza', 'destinazione', 'note'];
+      fields.forEach(f => {
+        if (draft[f]) document.getElementById(f).value = draft[f];
+      });
+      if (draft.tipo_prodotto) setPillByValue('tipo_prodotto', draft.tipo_prodotto);
+      if (draft.integrita) setPillByValue('integrita', draft.integrita);
+      // Bozze v1.1: la temperatura era una stringa tipo "+4.0°C"
+      const t = draft.temp_valore || (draft.temp_check ? String(draft.temp_check).replace('°C', '') : '');
+      document.getElementById('temp_valore').value = t;
+      updateHaccpOutcome();
+
+      document.getElementById('draft-alert-banner').classList.add('hidden');
+      showToast("Bozza ripristinata con successo!");
+    }
+
+    function clearFormDraft() {
+      storeDelete('draft');
+      document.getElementById('draft-alert-banner').classList.add('hidden');
+    }
+
+    let labelDraftTimeout = null;
+    function debounceLabelDraft() {
+      clearTimeout(labelDraftTimeout);
+      labelDraftTimeout = setTimeout(saveLabelDraft, 500);
+    }
+
+    function saveLabelDraft() {
+      const draft = {
+        nome: document.getElementById('lbl_nome').value,
+        data_prod: document.getElementById('lbl_data_prod').value,
+        data_scad: document.getElementById('lbl_data_scad').value,
+        conservazione: document.getElementById('lbl_conservazione').value,
+        operatore: document.getElementById('lbl_operatore').value,
+        materie_prime: addedOriginRawMaterials,
+        allergeni: activeAllergens
+      };
+      if (draft.nome || draft.materie_prime.length || draft.allergeni.length) {
+        storeSet('labelDraft', draft).catch(() => {});
+      } else {
+        storeDelete('labelDraft');
+      }
+    }
+
+    async function restoreLabelDraft() {
+      const d = await storeGet('labelDraft');
+      if (!d) return;
+      if (d.nome) document.getElementById('lbl_nome').value = d.nome;
+      if (d.data_prod) document.getElementById('lbl_data_prod').value = d.data_prod;
+      if (d.data_scad) document.getElementById('lbl_data_scad').value = d.data_scad;
+      if (d.conservazione) document.getElementById('lbl_conservazione').value = d.conservazione;
+      if (d.operatore) document.getElementById('lbl_operatore').value = d.operatore;
+      addedOriginRawMaterials = Array.isArray(d.materie_prime) ? d.materie_prime : [];
+      activeAllergens = Array.isArray(d.allergeni) ? d.allergeni.filter(a => ALLERGENI.includes(a)) : [];
+      renderOriginRawMaterials();
+      renderAllergenSelector();
+      generateInternalBatchCode();
+    }
+
+    function showAutoSaveBadge(saved) {
+      const badge = document.getElementById('autosave-status-badge');
+      if (!badge) return;
+
+      if (saved) {
+        badge.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 text-[8px]"></i> Bozza Salvata`;
+        badge.className = "px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[8.5px] font-bold flex items-center gap-1 transition-all";
+      } else {
+        badge.innerHTML = `<i class="fa-solid fa-spinner fa-spin text-amber-400 text-[8px]"></i> Salvataggio...`;
+        badge.className = "px-1.5 py-0.2 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded text-[8.5px] font-bold flex items-center gap-1 transition-all";
+      }
+    }
+
+    /* ===== PROMEMORIA BACKUP ===== */
+    function checkBackupReminder() {
+      const banner = document.getElementById('backup-reminder-banner');
+      const activeCount = registryData.filter(isActive).length;
+      if (activeCount === 0) {
+        banner.classList.add('hidden');
+        return;
+      }
+      const last = appMeta.lastBackup ? new Date(appMeta.lastBackup) : null;
+      const days = last ? Math.floor((Date.now() - last.getTime()) / 86400000) : null;
+      if (days === null || days >= 7) {
+        document.getElementById('backup-reminder-msg').innerText = days === null
+          ? 'Nessun backup del registro è mai stato scaricato su questo tablet.'
+          : `Ultimo backup ${days} giorni fa: scaricane uno nuovo.`;
+        banner.classList.remove('hidden');
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    /* ===== UI DI BASE ===== */
+    function setPillByValue(hiddenId, val) {
+      const hiddenEl = document.getElementById(hiddenId);
+      if (!hiddenEl) return;
+      const btn = hiddenEl.parentElement.querySelector(`.pill-btn[data-value="${val}"]`);
+      if (btn) {
+        setPill(btn, hiddenId, val);
+      } else {
+        hiddenEl.value = val;
+      }
+    }
+
+    function setPill(btn, hiddenId, value) {
+      btn.parentElement.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(hiddenId).value = value;
+      if (hiddenId === 'tipo_prodotto' || hiddenId === 'integrita') updateHaccpOutcome();
+      debounceAutoSave();
+    }
+
+    let toastTimeout = null;
+    function showToast(msg) {
+      const dialog = document.getElementById('app-dialog');
+      document.getElementById('app-dialog-msg').innerText = msg;
+      dialog.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-4');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        dialog.classList.add('opacity-0', 'pointer-events-none', 'translate-y-4');
+      }, 2800);
+    }
+
+    function applyCompanyConfig() {
+      const name = companyConfig.companyName || 'Gestione HACCP';
+      document.getElementById('header-company-title').innerText = name;
+      document.getElementById('lbl-company-header').innerText = name.toUpperCase();
+      document.getElementById('lbl-width-text').innerText = companyConfig.labelWidth;
+      document.documentElement.style.setProperty('--label-width', `${Number(companyConfig.labelWidth) - 4}mm`);
+      updateHaccpOutcome();
+    }
+
+    function switchTab(tab) {
+      const rBtn = document.getElementById('tab-ricevimento-btn');
+      const eBtn = document.getElementById('tab-etichette-btn');
+      const rView = document.getElementById('view-ricevimento');
+      const eView = document.getElementById('view-etichette');
+      const activeCls = "touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 transition-all";
+      const idleCls = "touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-slate-400 bg-transparent transition-all";
+
+      if (tab === 'ricevimento') {
+        rBtn.className = activeCls;
+        eBtn.className = idleCls;
+        rView.classList.remove('hidden');
+        eView.classList.add('hidden');
+      } else {
+        eBtn.className = activeCls;
+        rBtn.className = idleCls;
+        eView.classList.remove('hidden');
+        rView.classList.add('hidden');
+        refreshIncomingLotDatalist();
+        generateInternalBatchCode();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('haccp-form').reset();
+      document.getElementById('data_ricevimento').value = todayLocal();
+      document.getElementById('operatore').value = companyConfig.defaultOperator || '';
+      setPillByValue('tipo_prodotto', 'Fresco');
+      setPillByValue('integrita', 'Conforme');
+      document.getElementById('temp_valore').value = '';
+      updateHaccpOutcome();
+      clearFormDraft();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    /* ===== CONTROLLI HACCP: TEMPERATURA E SCADENZA ===== */
+    function parseDecimal(str) {
+      if (str === null || str === undefined) return null;
+      const s = String(str).trim().replace(',', '.').replace(/\s/g, '');
+      if (s === '' || !/^[+-]?\d+(\.\d+)?$/.test(s)) return null;
+      return parseFloat(s);
+    }
+
+    function formatTemp(v) {
+      return (v > 0 ? '+' : '') + v.toFixed(1) + '°C';
+    }
+
+    function setTempQuick(v) {
+      document.getElementById('temp_valore').value = v;
+      updateHaccpOutcome();
+      debounceAutoSave();
+    }
+
+    function tempLimitFor(tipo) {
+      if (tipo === 'Fresco') return parseDecimal(companyConfig.tempMaxFresco);
+      if (tipo === 'Surgelato') return parseDecimal(companyConfig.tempMaxSurgelato);
+      return null;
+    }
+
+    /* Valuta la temperatura misurata rispetto al limite della tipologia */
+    function evaluateTemperature() {
+      const tipo = document.getElementById('tipo_prodotto').value;
+      const raw = document.getElementById('temp_valore').value;
+      const val = parseDecimal(raw);
+      const limit = tempLimitFor(tipo);
+
+      if (tipo === 'Secco') {
+        return { required: false, valid: true, valore: val, testo: val === null ? 'N.A.' : formatTemp(val), esito: 'N.A.' };
+      }
+      if (raw.trim() !== '' && val === null) {
+        return { required: true, valid: false, valore: null, testo: '', esito: '', errore: 'Valore non valido' };
+      }
+      if (val === null) {
+        return { required: true, valid: false, valore: null, testo: '', esito: '' };
+      }
+      const ok = limit === null ? true : val <= limit;
+      return { required: true, valid: true, valore: val, testo: formatTemp(val), esito: ok ? 'Conforme' : 'Non conforme', limit };
+    }
+
+    function evaluateExpiry() {
+      const scad = document.getElementById('scadenza').value;
+      const ric = document.getElementById('data_ricevimento').value;
+      if (!scad || !ric) return 'N.D.';
+      return scad < ric ? 'Scaduto' : 'Valido';
+    }
+
+    function updateHaccpOutcome() {
+      const tipoEl = document.getElementById('tipo_prodotto');
+      if (!tipoEl) return;
+      const tipo = tipoEl.value;
+      const limit = tempLimitFor(tipo);
+      document.getElementById('temp-limit-hint').innerText = tipo === 'Secco'
+        ? 'facoltativa per i secchi'
+        : `limite ≤ ${formatTemp(limit)}`;
+
+      const t = evaluateTemperature();
+      const esitoEl = document.getElementById('temp-esito');
+      if (t.errore) {
+        esitoEl.innerHTML = `<span class="text-rose-400">${t.errore}</span>`;
+      } else if (t.esito === 'Conforme') {
+        esitoEl.innerHTML = `<span class="text-emerald-400"><i class="fa-solid fa-circle-check"></i> ${t.testo} conforme</span>`;
+      } else if (t.esito === 'Non conforme') {
+        esitoEl.innerHTML = `<span class="text-rose-400"><i class="fa-solid fa-triangle-exclamation"></i> ${t.testo} NON conforme (limite ${formatTemp(t.limit)})</span>`;
+      } else {
+        esitoEl.innerHTML = '';
+      }
+
+      const problems = [];
+      if (t.esito === 'Non conforme') problems.push('temperatura fuori limite');
+      if (document.getElementById('integrita').value === 'Anomalia') problems.push('imballo non integro');
+      if (evaluateExpiry() === 'Scaduto') problems.push('prodotto già scaduto alla consegna');
+
+      const box = document.getElementById('haccp-outcome');
+      const noteLabel = document.getElementById('note-label');
+      if (problems.length) {
+        box.className = 'text-[11px] font-semibold rounded-xl p-2.5 border bg-rose-500/10 border-rose-500/40 text-rose-300';
+        box.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> NON CONFORMITÀ: ${problems.join(', ')}. Descrivi l'azione correttiva nelle note (es. merce respinta, reso al fornitore).`;
+        noteLabel.innerHTML = 'Azione correttiva <span class="text-rose-400">*</span>';
+      } else {
+        box.className = 'hidden';
+        noteLabel.innerText = 'Note / Azioni Correttive';
+      }
+    }
+
+    function isActive(item) {
+      return item.stato !== 'annullato';
+    }
+
+    function isNonConforme(item) {
+      return item.integrita === 'Anomalia' || item.temp_esito === 'Non conforme' || item.scadenza_esito === 'Scaduto';
+    }
+
+    /* ===== RICONOSCIMENTO VOCALE ===== */
+    function startVoice(fieldId) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+      if (!SpeechRecognition) {
+        showToast("Riconoscimento vocale non supportato.");
+        return;
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'it-IT';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      const inputEl = document.getElementById(fieldId);
+      const parentGroup = inputEl.closest('.relative');
+      const micIcon = parentGroup ? parentGroup.querySelector('.mic-icon') : null;
+
+      const originalPlaceholder = inputEl.placeholder;
+      inputEl.placeholder = "🎙️ Ascolto in corso...";
+      if (micIcon) micIcon.classList.add('mic-pulse');
+
+      recognition.start();
+
+      recognition.onresult = (event) => {
+        let transcript = event.results[0][0].transcript;
+        transcript = transcript.trim().replace(/\.$/, '');
+
+        if (fieldId === 'lotto' || fieldId === 'input_add_lotto_code') {
+          transcript = transcript.toUpperCase().replace(/\s+/g, '');
+        } else if (fieldId === 'lbl_nome') {
+          transcript = transcript.toUpperCase();
+        }
+
+        inputEl.value = transcript;
+        inputEl.placeholder = originalPlaceholder;
+        if (micIcon) micIcon.classList.remove('mic-pulse');
+
+        if (fieldId === 'input_add_lotto_code') {
+          autoFetchProductNameForAdd(transcript);
+        }
+
+        inputEl.dispatchEvent(new Event('input', { bubbles: true }));
+        showToast("Voce acquisita");
+      };
+
+      recognition.onerror = () => {
+        inputEl.placeholder = originalPlaceholder;
+        if (micIcon) micIcon.classList.remove('mic-pulse');
+      };
+
+      recognition.onend = () => {
+        inputEl.placeholder = originalPlaceholder;
+        if (micIcon) micIcon.classList.remove('mic-pulse');
+      };
+    }
+
+    /* ===== OCR DA FOTOCAMERA ===== */
+    function triggerOCR() {
+      document.getElementById('ocr-file-input').click();
+    }
+
+    function processOCR(event) {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      if (typeof Tesseract === 'undefined') {
+        showToast("OCR non disponibile: serve la connessione al primo utilizzo.");
+        return;
+      }
+
+      showToast("Lettura etichetta OCR...");
+
+      Tesseract.recognize(file, 'ita').then(({ data: { text } }) => {
+        parseOCRText(text);
+      }).catch(() => {
+        showToast("Errore lettura OCR");
+      });
+    }
+
+    function parseOCRText(text) {
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      const lotRe = /\b(?:lotto|lot|l)\s*(?:n\.?|n°|nr\.?)?\s*[:.#]?\s*([A-Z0-9][A-Z0-9\-\/.]{2,})/i;
+      const dateRe = /(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2,4})/;
+      let foundLotto = '';
+      let foundProduct = '';
+      let foundScadenza = '';
+
+      lines.forEach(line => {
+        if (!foundLotto) {
+          const m = line.match(lotRe);
+          if (m && /\d/.test(m[1])) foundLotto = m[1].toUpperCase().replace(/[.]$/, '');
+        }
+        if (!foundScadenza && /scad|consumar|tmc|entro|exp/i.test(line)) {
+          const d = line.match(dateRe);
+          if (d) {
+            let y = Number(d[3]);
+            if (y < 100) y += 2000;
+            const mm = Number(d[2]);
+            const dd = Number(d[1]);
+            if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) foundScadenza = `${y}-${pad2(mm)}-${pad2(dd)}`;
+          }
+        }
+        if (!foundProduct && line.length > 5 && /[a-z]{3,}/i.test(line) && !/scad|data|ingred|lott|conserv|consumar/i.test(line)) {
+          foundProduct = line;
+        }
+      });
+
+      if (foundLotto) document.getElementById('lotto').value = foundLotto;
+      if (foundProduct) document.getElementById('nome_prodotto').value = foundProduct;
+      if (foundScadenza) document.getElementById('scadenza').value = foundScadenza;
+
+      updateHaccpOutcome();
+      debounceAutoSave();
+      showToast(foundLotto || foundProduct || foundScadenza ? "Scansione completata: verifica i campi" : "Nessun dato riconosciuto");
+    }
+
+    /* ===== MATERIE PRIME DI ORIGINE PER LE PREPARAZIONI ===== */
+    function autoFetchProductNameForAdd(lotCode) {
+      if (!lotCode || !lotCode.trim()) return;
+      const searchLot = lotCode.trim().toLowerCase();
+
+      const foundMatch = registryData.find(item => isActive(item) && item.lotto && item.lotto.toLowerCase() === searchLot);
+      if (foundMatch && foundMatch.nome_prodotto) {
+        document.getElementById('input_add_lotto_name').value = foundMatch.nome_prodotto;
+      }
+    }
+
+    function addOriginRawMaterial() {
+      const codeEl = document.getElementById('input_add_lotto_code');
+      const nameEl = document.getElementById('input_add_lotto_name');
+
+      const code = codeEl.value.trim().toUpperCase();
+      const name = nameEl.value.trim();
+
+      if (!code && !name) {
+        showToast("Inserisci almeno il codice lotto o il nome");
+        return;
+      }
+
+      addedOriginRawMaterials.push({
+        id: 'MP-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
+        code: code || 'SENZA LOTTO',
+        name: name || 'Materia Prima non specificata'
+      });
+      codeEl.value = '';
+      nameEl.value = '';
+
+      renderOriginRawMaterials();
+      saveLabelDraft();
+      showToast("Lotto ingrediente aggiunto");
+    }
+
+    function removeOriginRawMaterial(id) {
+      addedOriginRawMaterials = addedOriginRawMaterials.filter(m => m.id !== id);
+      renderOriginRawMaterials();
+      saveLabelDraft();
+      showToast("Lotto rimosso");
+    }
+
+    function renderOriginRawMaterials() {
+      const container = document.getElementById('origin-lots-container');
+      const emptyMsg = document.getElementById('origin-lots-empty-msg');
+
+      if (addedOriginRawMaterials.length === 0) {
+        container.innerHTML = '';
+        emptyMsg.classList.remove('hidden');
+        return;
+      }
+
+      emptyMsg.classList.add('hidden');
+      container.innerHTML = addedOriginRawMaterials.map(m => `
+        <div class="flex items-center justify-between gap-2 bg-inputBg border border-emerald-500/30 rounded-xl px-2.5 py-1.5 text-xs">
+          <div class="min-w-0">
+            <span class="font-mono font-bold text-emerald-400">${escapeHtml(m.code)}</span>
+            <span class="text-slate-400 text-[10px] mx-1">➔</span>
+            <span class="font-medium text-slate-200 truncate">${escapeHtml(m.name)}</span>
+          </div>
+          <button type="button" onclick="removeOriginRawMaterial('${escapeHtml(m.id)}')" class="text-rose-400 hover:text-rose-300 p-1 font-bold text-xs active:scale-90">
+            &times;
+          </button>
+        </div>
+      `).join('');
+    }
+
+    function refreshIncomingLotDatalist() {
+      const dl = document.getElementById('lotti-ricevuti-list');
+      if (!dl) return;
+
+      const uniqueLots = new Map();
+      registryData.forEach(item => {
+        if (isActive(item) && item.lotto && !uniqueLots.has(item.lotto)) {
+          uniqueLots.set(item.lotto, item.nome_prodotto);
+        }
+      });
+
+      let optionsHtml = '';
+      uniqueLots.forEach((prodName, lotCode) => {
+        optionsHtml += `<option value="${escapeHtml(lotCode)}">${escapeHtml(prodName)}</option>`;
+      });
+      dl.innerHTML = optionsHtml;
+    }
+
+    /* ===== REGISTRAZIONE RICEVIMENTO ===== */
+    async function saveEntry(e) {
+      e.preventDefault();
+
+      const t = evaluateTemperature();
+      if (t.required && !t.valid) {
+        showToast(t.errore ? "Temperatura non valida (es. 3,2 oppure -18)" : "Inserisci la temperatura misurata");
+        document.getElementById('temp_valore').focus();
+        return;
+      }
+
+      const integrita = document.getElementById('integrita').value;
+      const scadenzaEsito = evaluateExpiry();
+      const note = document.getElementById('note').value.trim();
+      const nonConforme = t.esito === 'Non conforme' || integrita === 'Anomalia' || scadenzaEsito === 'Scaduto';
+
+      if (nonConforme && !note) {
+        showToast("Non conformità: indica l'azione correttiva nelle note");
+        document.getElementById('note').focus();
+        return;
+      }
+
+      const lotto = document.getElementById('lotto').value.trim();
+      const fornitore = document.getElementById('fornitore').value.trim();
+      const dataRic = document.getElementById('data_ricevimento').value;
+      const duplicate = registryData.find(r => isActive(r) && r.lotto === lotto && r.fornitore === fornitore && r.data_ricevimento === dataRic);
+      if (duplicate && !confirm(`Il lotto ${lotto} di ${fornitore} risulta già registrato oggi. Registrarlo di nuovo?`)) {
+        return;
+      }
+
+      const rawQty = document.getElementById('quantita').value.trim();
+      const unitQty = document.getElementById('quantita_unita').value;
+
+      const entry = {
+        id: 'REQ-' + Date.now(),
+        data_ricevimento: dataRic,
+        operatore: document.getElementById('operatore').value.trim(),
+        fornitore: fornitore,
+        nome_prodotto: document.getElementById('nome_prodotto').value.trim(),
+        lotto: lotto,
+        quantita: rawQty ? `${rawQty} ${unitQty}` : 'N.D.',
+        scadenza: document.getElementById('scadenza').value,
+        scadenza_esito: scadenzaEsito,
+        tipo_prodotto: document.getElementById('tipo_prodotto').value,
+        temp_valore: t.valore,
+        temp_check: t.testo,
+        temp_esito: t.esito,
+        integrita: integrita,
+        destinazione: document.getElementById('destinazione').value.trim() || 'N.D.',
+        note: note || 'Nessuna nota',
+        stato: 'attivo',
+        created_at: new Date().toISOString()
+      };
+
+      registryData.unshift(entry);
+      const ok = await persistRegistry();
+      if (!ok) {
+        registryData.shift();
+        return;
+      }
+
+      updateMetrics();
+      renderRegistry();
+      refreshIncomingLotDatalist();
+      checkBackupReminder();
+
+      // Modulo pulito per il lotto successivo (evita doppie registrazioni)
+      resetForm();
+      showToast(nonConforme ? "⚠ Registrata NON CONFORMITÀ" : "✓ Registrazione salvata sul tablet");
+      toggleRegistryView(true);
+    }
+
+    function updateMetrics() {
+      const active = registryData.filter(isActive);
+      document.getElementById('cnt-totale').innerText = active.length;
+      document.getElementById('cnt-anomalie').innerText = active.filter(isNonConforme).length;
+      const todayStr = todayLocal();
+      document.getElementById('cnt-oggi').innerText = active.filter(d => d.data_ricevimento === todayStr).length;
+    }
+
+    function toggleRegistryView(forceShow = false) {
+      const regSection = document.getElementById('registry-card-section');
+      if (forceShow === true || regSection.classList.contains('hidden')) {
+        regSection.classList.remove('hidden');
+        if (window.innerWidth < 768) regSection.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        regSection.classList.add('hidden');
+      }
+    }
+
+    function renderRegistry() {
+      const listContainer = document.getElementById('registry-list');
+      const searchQuery = document.getElementById('search-input').value.toLowerCase();
+      const showAnnullati = document.getElementById('show-annullati').checked;
+
+      const filtered = registryData.filter(item => {
+        if (!showAnnullati && !isActive(item)) return false;
+        return [item.nome_prodotto, item.fornitore, item.lotto, item.note]
+          .some(v => v && String(v).toLowerCase().includes(searchQuery));
+      });
+
+      if (filtered.length === 0) {
+        listContainer.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">Nessun record trovato.</div>`;
+        return;
+      }
+
+      listContainer.innerHTML = filtered.map(item => {
+        const annullato = !isActive(item);
+        const nc = isNonConforme(item);
+        const badge = annullato
+          ? '<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-slate-600/40 text-slate-300 border border-slate-500/40">Annullato</span>'
+          : nc
+            ? '<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-rose-500/20 text-rose-400 border border-rose-500/30">Non conforme</span>'
+            : '<span class="px-2 py-0.5 rounded text-[9px] font-black uppercase bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">Conforme</span>';
+        const tempTxt = item.temp_check
+          ? `${escapeHtml(item.temp_check)}${item.temp_esito === 'Non conforme' ? ' ⚠' : ''}`
+          : 'N.D.';
+
+        return `
+        <div class="bg-inputBg/80 border ${annullato ? 'border-slate-600/40 opacity-60 record-annullato' : nc ? 'border-rose-500/50' : 'border-cardBorder'} rounded-xl p-3 space-y-2">
+          <div class="flex items-start justify-between gap-2">
+            <div>
+              <div class="record-title text-xs font-black text-slate-100">${escapeHtml(item.nome_prodotto)}</div>
+              <div class="text-[11px] font-semibold text-emerald-400"><i class="fa-solid fa-truck text-[10px]"></i> ${escapeHtml(item.fornitore)}</div>
+            </div>
+            ${badge}
+          </div>
+
+          <div class="grid grid-cols-2 gap-1.5 text-[10.5px] text-slate-400 bg-appBg/60 p-2 rounded-lg">
+            <span>Data: <strong class="text-slate-200">${formatDate(item.data_ricevimento)}</strong></span>
+            <span>Lotto: <strong class="text-slate-200 font-mono">${escapeHtml(item.lotto)}</strong></span>
+            <span>Quantità: <strong class="text-slate-200">${escapeHtml(item.quantita)}</strong></span>
+            <span>Scad: <strong class="text-slate-200">${formatDate(item.scadenza)}${item.scadenza_esito === 'Scaduto' ? ' ⚠' : ''}</strong></span>
+            <span>Temp: <strong class="text-slate-200">${tempTxt}</strong></span>
+            <span>Op: <strong class="text-slate-200">${escapeHtml(item.operatore)}</strong></span>
+          </div>
+
+          ${item.note && item.note !== 'Nessuna nota' ? `<div class="text-[10px] text-slate-300 bg-emerald-950/30 border border-emerald-500/20 p-1.5 rounded-lg"><i class="fa-solid fa-info-circle text-emerald-400"></i> ${escapeHtml(item.note)}</div>` : ''}
+          ${annullato ? `<div class="text-[10px] text-slate-300 bg-slate-700/30 border border-slate-500/30 p-1.5 rounded-lg"><i class="fa-solid fa-ban"></i> Annullato il ${formatDateTime(item.annullato_at)}: ${escapeHtml(item.annullato_motivo)}</div>` : ''}
+
+          <div class="flex justify-end gap-1.5 pt-0.5">
+            <button onclick="openReportModal('${escapeHtml(item.id)}')" class="px-2.5 py-1 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 font-bold text-[10.5px] rounded-lg flex items-center gap-1 active:scale-95">
+              <i class="fa-solid fa-file-lines"></i> Scheda Audit
+            </button>
+            ${annullato ? '' : `
+            <button onclick="annullaEntry('${escapeHtml(item.id)}')" class="px-2.5 py-1 bg-rose-500/20 border border-rose-500/30 text-rose-400 font-bold text-[10.5px] rounded-lg active:scale-95 flex items-center gap-1">
+              <i class="fa-solid fa-ban"></i> Annulla
+            </button>`}
+          </div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    /* Annullamento logico: il record resta nel registro con motivo e data */
+    async function annullaEntry(id) {
+      const item = registryData.find(i => i.id === id);
+      if (!item) return;
+      const motivo = prompt(`Annullare la registrazione "${item.nome_prodotto}" (lotto ${item.lotto})?\nIl record resterà nel registro come ANNULLATO.\n\nIndica il motivo (obbligatorio):`);
+      if (motivo === null) return;
+      if (!motivo.trim()) {
+        showToast("Motivo obbligatorio: annullamento non eseguito");
+        return;
+      }
+      item.stato = 'annullato';
+      item.annullato_motivo = motivo.trim();
+      item.annullato_at = new Date().toISOString();
+      await persistRegistry();
+      updateMetrics();
+      renderRegistry();
+      refreshIncomingLotDatalist();
+      showToast("Registrazione annullata");
+    }
+
+    /* ===== ETICHETTE PREPARAZIONI ===== */
+    function renderAllergenSelector() {
+      const box = document.getElementById('allergens-selector');
+      box.innerHTML = ALLERGENI.map(a => `
+        <span class="allergen-tag px-2.5 py-1 bg-inputBg border border-cardBorder text-slate-400 rounded-full text-xs font-medium cursor-pointer select-none${activeAllergens.includes(a) ? ' on' : ''}" data-name="${escapeHtml(a)}" onclick="toggleAllergen(this)">${escapeHtml(a)}</span>
+      `).join('');
+    }
+
+    function toggleAllergen(el) {
+      const name = el.dataset.name;
+      if (activeAllergens.includes(name)) {
+        activeAllergens = activeAllergens.filter(a => a !== name);
+        el.classList.remove('on');
+      } else {
+        activeAllergens.push(name);
+        el.classList.add('on');
+      }
+      saveLabelDraft();
+    }
+
+    /* Lotto interno progressivo per data di preparazione: P-AAAAMMGG-NN */
+    function nextInternalLot(dateStr) {
+      const prefix = `P-${String(dateStr).replace(/-/g, '')}-`;
+      let maxSeq = 0;
+      registryData.forEach(r => {
+        if (r.lotto && r.lotto.startsWith(prefix)) {
+          const n = parseInt(r.lotto.slice(prefix.length), 10);
+          if (!isNaN(n) && n > maxSeq) maxSeq = n;
+        }
+      });
+      return prefix + pad2(maxSeq + 1);
+    }
+
+    function generateInternalBatchCode() {
+      const prodDate = document.getElementById('lbl_data_prod').value || todayLocal();
+      document.getElementById('lbl_lotto_interno').value = nextInternalLot(prodDate);
+    }
+
+    function addDaysToTMC(days) {
+      const prodValue = document.getElementById('lbl_data_prod').value;
+      const baseDate = prodValue ? parseLocalDate(prodValue) : new Date();
+      if (isNaN(baseDate.getTime())) return;
+
+      baseDate.setDate(baseDate.getDate() + days);
+      document.getElementById('lbl_data_scad').value = toLocalISO(baseDate);
+      saveLabelDraft();
+    }
+
+    function generateLabelPreview(e) {
+      if (e) e.preventDefault();
+
+      const prodDate = document.getElementById('lbl_data_prod').value;
+      const scadDate = document.getElementById('lbl_data_scad').value;
+      if (scadDate < prodDate) {
+        showToast("La scadenza è precedente alla data di preparazione");
+        return false;
+      }
+
+      generateInternalBatchCode();
+      const nome = document.getElementById('lbl_nome').value.trim().toUpperCase();
+      const lotto = document.getElementById('lbl_lotto_interno').value;
+      const prod = formatDate(prodDate);
+      const scad = formatDate(scadDate);
+      const cons = document.getElementById('lbl_conservazione').value;
+
+      document.getElementById('out-lbl-nome').innerText = nome;
+      document.getElementById('out-lbl-lotto').innerText = lotto;
+      document.getElementById('out-lbl-prod').innerText = prod;
+      document.getElementById('out-lbl-scad').innerText = scad;
+      document.getElementById('out-lbl-cons').innerText = cons;
+      document.getElementById('out-lbl-op').innerText = document.getElementById('lbl_operatore').value || '-';
+
+      const rawMaterialsContainer = document.getElementById('out-lbl-orig-list');
+      if (addedOriginRawMaterials.length === 0) {
+        rawMaterialsContainer.innerHTML = '<div>• Nessun lotto ingrediente fornito</div>';
+      } else {
+        rawMaterialsContainer.innerHTML = addedOriginRawMaterials
+          .map(m => `<div>• <strong>${escapeHtml(m.code)}</strong> ➔ ${escapeHtml(m.name)}</div>`)
+          .join('');
+      }
+
+      document.getElementById('out-lbl-allergens').innerHTML = activeAllergens.length > 0
+        ? `ALLERGENI: <strong>${escapeHtml(activeAllergens.join(', '))}</strong>`
+        : 'ALLERGENI: Nessun allergene dichiarato';
+
+      // QR compatto: dati essenziali + soli codici lotto delle materie prime
+      const mpCodes = addedOriginRawMaterials.map(m => m.code).join(',');
+      let qrPayload = `${companyConfig.companyName}|LOTTO:${lotto}|${nome}|PREP:${prod}|SCAD:${scad}|MP:${mpCodes || 'N.D.'}`;
+      if (qrPayload.length > 300) qrPayload = qrPayload.slice(0, 297) + '...';
+
+      const qrContainer = document.getElementById('qrcode');
+      qrContainer.innerHTML = '';
+      try {
+        new QRCode(qrContainer, {
+          text: qrPayload,
+          width: 96,
+          height: 96,
+          correctLevel: QRCode.CorrectLevel.L
+        });
+      } catch (err) {
+        qrContainer.innerHTML = '<div class="text-[9px]">QR non generato</div>';
+      }
+
+      const wrapper = document.getElementById('label-output-wrapper');
+      wrapper.classList.remove('hidden');
+      if (window.innerWidth < 768) wrapper.scrollIntoView({ behavior: 'smooth' });
+      labelPreviewLot = lotto;
+      return true;
+    }
+
+    let labelPreviewLot = null;
+
+    async function saveInternalPreparation() {
+      const form = document.getElementById('label-form');
+      if (!form.reportValidity()) return;
+
+      // Allinea l'anteprima ai dati attuali; se il lotto è cambiato va ristampata
+      if (!generateLabelPreview()) return;
+
+      const lotto = document.getElementById('lbl_lotto_interno').value;
+      const nome = document.getElementById('lbl_nome').value.trim().toUpperCase();
+      const materie = addedOriginRawMaterials.map(m => ({ code: m.code, name: m.name }));
+      const rawSummaryText = materie.length
+        ? materie.map(m => `${m.name} [Lotto: ${m.code}]`).join(', ')
+        : 'Nessuna MP specificata';
+
+      const entry = {
+        id: 'PREP-' + Date.now(),
+        data_ricevimento: document.getElementById('lbl_data_prod').value,
+        operatore: document.getElementById('lbl_operatore').value.trim() || companyConfig.defaultOperator || 'N.D.',
+        fornitore: 'LAVORATO INTERNO',
+        nome_prodotto: nome,
+        lotto: lotto,
+        quantita: 'Lotto Int.',
+        scadenza: document.getElementById('lbl_data_scad').value,
+        scadenza_esito: 'Valido',
+        tipo_prodotto: 'Lavorato Interno',
+        temp_valore: null,
+        temp_check: document.getElementById('lbl_conservazione').value,
+        temp_esito: 'N.A.',
+        integrita: 'Conforme',
+        destinazione: 'Uso Interno / Somministrazione',
+        materie_prime: materie,
+        allergeni: [...activeAllergens],
+        note: `MP Origine: ${rawSummaryText} | Allergeni: ${activeAllergens.join(', ') || 'Nessuno'}`,
+        stato: 'attivo',
+        created_at: new Date().toISOString()
+      };
+
+      registryData.unshift(entry);
+      const ok = await persistRegistry();
+      if (!ok) {
+        registryData.shift();
+        return;
+      }
+
+      updateMetrics();
+      renderRegistry();
+      refreshIncomingLotDatalist();
+      checkBackupReminder();
+
+      // Pulisce il modulo: la preparazione successiva parte da zero
+      document.getElementById('lbl_nome').value = '';
+      document.getElementById('lbl_data_scad').value = '';
+      addedOriginRawMaterials = [];
+      activeAllergens = [];
+      renderOriginRawMaterials();
+      renderAllergenSelector();
+      storeDelete('labelDraft');
+      document.getElementById('label-output-wrapper').classList.add('hidden');
+      generateInternalBatchCode();
+
+      showToast(`✓ Preparazione ${lotto} salvata nel registro`);
+    }
+
+    /* ===== STAMPA ===== */
+    function printWithMode(mode, pageCss) {
+      document.getElementById('page-style').textContent = `@media print { @page { ${pageCss} } }`;
+      document.body.classList.add(mode);
+      const cleanup = () => {
+        document.body.classList.remove(mode);
+        window.removeEventListener('afterprint', cleanup);
+      };
+      window.addEventListener('afterprint', cleanup);
+      window.print();
+    }
+
+    function printLabel() {
+      printWithMode('print-label', 'margin: 2mm;');
+    }
+
+    function printReport() {
+      printWithMode('print-report', 'size: A4; margin: 15mm;');
+    }
+
+    /* ===== SCHEDA AUDIT E CONDIVISIONE ===== */
+    function openReportModal(id) {
+      currentSelectedReport = registryData.find(i => i.id === id);
+      if (!currentSelectedReport) return;
+      const r = currentSelectedReport;
+
+      const mpHtml = Array.isArray(r.materie_prime) && r.materie_prime.length
+        ? `<div><strong>Materie prime:</strong><ul class="list-disc ml-4">${r.materie_prime.map(m => `<li>${escapeHtml(m.name)} — lotto <span class="font-mono">${escapeHtml(m.code)}</span></li>`).join('')}</ul></div>`
+        : '';
+      const allergeniHtml = Array.isArray(r.allergeni)
+        ? `<div><strong>Allergeni:</strong> ${escapeHtml(r.allergeni.join(', ') || 'Nessuno')}</div>`
+        : '';
+
+      document.getElementById('report-modal-body').innerHTML = `
+        <div class="text-center border-b border-slate-300 pb-2 mb-2">
+          <h2 class="font-black text-sm uppercase">${escapeHtml(companyConfig.companyName)}</h2>
+          <p class="text-[10px] text-slate-600">${r.tipo_prodotto === 'Lavorato Interno' ? 'PREPARAZIONE INTERNA' : 'VERIFICA MERCI IN INGRESSO'} - REGISTRO HACCP OSA</p>
+        </div>
+        <div class="space-y-1 text-[11px]">
+          ${!isActive(r) ? `<div class="p-1.5 border border-slate-400 bg-slate-100"><strong>ANNULLATO</strong> il ${formatDateTime(r.annullato_at)} — ${escapeHtml(r.annullato_motivo)}</div>` : ''}
+          <div><strong>ID registrazione:</strong> <span class="font-mono">${escapeHtml(r.id)}</span></div>
+          <div><strong>Data:</strong> ${formatDate(r.data_ricevimento)} <span class="text-slate-500">(registrato ${formatDateTime(r.created_at)})</span></div>
+          <div><strong>Fornitore:</strong> ${escapeHtml(r.fornitore)}</div>
+          <div><strong>Prodotto:</strong> ${escapeHtml(r.nome_prodotto)}</div>
+          <div><strong>Lotto:</strong> <span class="font-mono font-bold">${escapeHtml(r.lotto)}</span></div>
+          <div><strong>Quantità:</strong> ${escapeHtml(r.quantita)}</div>
+          <div><strong>Scadenza:</strong> ${formatDate(r.scadenza)}${r.scadenza_esito === 'Scaduto' ? ' <strong>(SCADUTO)</strong>' : ''}</div>
+          <div><strong>Tipologia:</strong> ${escapeHtml(r.tipo_prodotto)}</div>
+          <div><strong>Temperatura / Cons.:</strong> ${escapeHtml(r.temp_check)} ${r.temp_esito && r.temp_esito !== 'N.A.' && r.temp_esito !== 'N.D.' ? `(${escapeHtml(r.temp_esito)})` : ''}</div>
+          <div><strong>Imballo:</strong> ${escapeHtml(r.integrita)}</div>
+          <div><strong>Esito controllo:</strong> ${isNonConforme(r) ? '<strong>NON CONFORME</strong>' : 'Conforme'}</div>
+          <div><strong>Operatore:</strong> ${escapeHtml(r.operatore)}</div>
+          <div><strong>Destinazione:</strong> ${escapeHtml(r.destinazione)}</div>
+          ${mpHtml}
+          ${allergeniHtml}
+          <div><strong>Note / Azioni correttive:</strong> ${escapeHtml(r.note)}</div>
+        </div>
+      `;
+
+      document.getElementById('report-modal').classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeReportModal() {
+      document.getElementById('report-modal').classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    function reportText(r) {
+      return `${companyConfig.companyName.toUpperCase()} - SCHEDA AUDIT RINTRACCIABILITÀ\n\n` +
+        (isActive(r) ? '' : `*** ANNULLATO: ${r.annullato_motivo} ***\n`) +
+        `Data: ${formatDate(r.data_ricevimento)}\n` +
+        `Prodotto: ${r.nome_prodotto}\n` +
+        `Fornitore: ${r.fornitore}\n` +
+        `Lotto: ${r.lotto}\n` +
+        `Quantità: ${r.quantita}\n` +
+        `Scadenza: ${formatDate(r.scadenza)}\n` +
+        `Temperatura: ${r.temp_check} ${r.temp_esito || ''}\n` +
+        `Integrità Imballo: ${r.integrita}\n` +
+        `Esito: ${isNonConforme(r) ? 'NON CONFORME' : 'Conforme'}\n` +
+        `Operatore: ${r.operatore}\n` +
+        `Destinazione/Note: ${r.destinazione} | ${r.note}`;
+    }
+
+    function shareSingleWhatsApp() {
+      if (!currentSelectedReport) return;
+      window.open(`https://wa.me/?text=${encodeURIComponent(reportText(currentSelectedReport))}`, '_blank');
+    }
+
+    function shareSingleEmail() {
+      if (!currentSelectedReport) return;
+      const email = companyConfig.defaultEmail || '';
+      const subject = encodeURIComponent(`Audit Rintracciabilità ${companyConfig.companyName} - Lotto ${currentSelectedReport.lotto}`);
+      window.location.href = `mailto:${email}?subject=${subject}&body=${encodeURIComponent(reportText(currentSelectedReport))}`;
+    }
+
+    function shareFullRegistryEmail() {
+      const email = companyConfig.defaultEmail || '';
+      const subject = encodeURIComponent(`${companyConfig.companyName} - Registro Rintracciabilità OSA`);
+      const MAX_BODY = 1800;
+
+      const active = registryData.filter(isActive);
+      let bodyText = `${companyConfig.companyName.toUpperCase()} - REGISTRO RICEVIMENTO MERCI E RINTRACCIABILITÀ\n\n`;
+      let included = 0;
+      for (const item of active) {
+        const line = `${included + 1}. [${formatDate(item.data_ricevimento)}] ${item.nome_prodotto} | Lotto: ${item.lotto} | ${item.fornitore} | Scad: ${formatDate(item.scadenza)}${isNonConforme(item) ? ' | NON CONFORME' : ''}\n`;
+        if (encodeURIComponent(bodyText + line).length > MAX_BODY) break;
+        bodyText += line;
+        included++;
+      }
+      if (included < active.length) {
+        bodyText += `\n... altri ${active.length - included} record: allegare l'export Excel per il registro completo.`;
+        showToast("Registro lungo: nell'email solo i record più recenti");
+      }
+
+      window.location.href = `mailto:${email}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+    }
+
+    /* ===== EXPORT ===== */
+    const EXPORT_HEADERS = ['ID', 'Stato', 'Data', 'Fornitore', 'Prodotto', 'Lotto', 'Quantità', 'Scadenza', 'Tipologia', 'Temperatura / Conservazione', 'Esito Temperatura', 'Integrità Imballo', 'Esito', 'Operatore', 'Destinazione', 'Note / Materie Prime Origine', 'Motivo Annullamento', 'Registrato il'];
+
+    function exportRow(r) {
+      return [
+        r.id,
+        isActive(r) ? 'Attivo' : 'Annullato',
+        formatDate(r.data_ricevimento),
+        r.fornitore,
+        r.nome_prodotto,
+        r.lotto,
+        r.quantita,
+        formatDate(r.scadenza),
+        r.tipo_prodotto,
+        r.temp_check,
+        r.temp_esito,
+        r.integrita,
+        isNonConforme(r) ? 'NON CONFORME' : 'Conforme',
+        r.operatore,
+        r.destinazione,
+        r.note,
+        r.annullato_motivo || '',
+        formatDateTime(r.created_at)
+      ].map(v => (v === null || v === undefined) ? '' : String(v));
+    }
+
+    function exportFileBase() {
+      return `${(companyConfig.companyName || 'Registro').replace(/\s+/g, '_')}_Registro_HACCP_${todayLocal()}`;
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+
+    function exportCSV() {
+      if (registryData.length === 0) {
+        showToast("Nessun dato da esportare.");
+        return;
+      }
+
+      const csvCell = v => `"${v.replace(/"/g, '""')}"`;
+      let csv = EXPORT_HEADERS.map(csvCell).join(';') + '\r\n';
+      registryData.forEach(r => {
+        csv += exportRow(r).map(csvCell).join(';') + '\r\n';
+      });
+
+      // BOM UTF-8: Excel legge correttamente le lettere accentate
+      downloadBlob(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), exportFileBase() + '.csv');
+      showToast("CSV scaricato!");
+    }
+
+    function exportExcel() {
+      if (registryData.length === 0) {
+        showToast("Nessun dato da esportare.");
+        return;
+      }
+
+      let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
+      xml += '<?mso-application progid="Excel.Sheet"?>\n';
+      xml += '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n';
+      xml += ' xmlns:o="urn:schemas-microsoft-com:office:office"\n';
+      xml += ' xmlns:x="urn:schemas-microsoft-com:office:excel"\n';
+      xml += ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">\n';
+      xml += ' <Styles>\n';
+      xml += '  <Style ss:ID="Header">\n';
+      xml += '   <Font ss:Bold="1" ss:Color="#FFFFFF"/>\n';
+      xml += '   <Interior ss:Color="#10B981" ss:Pattern="Solid"/>\n';
+      xml += '   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>\n';
+      xml += '  </Style>\n';
+      xml += '  <Style ss:ID="DefaultCell">\n';
+      xml += '   <Alignment ss:Vertical="Center"/>\n';
+      xml += '  </Style>\n';
+      xml += '  <Style ss:ID="NcCell">\n';
+      xml += '   <Alignment ss:Vertical="Center"/>\n';
+      xml += '   <Interior ss:Color="#FDE2E2" ss:Pattern="Solid"/>\n';
+      xml += '  </Style>\n';
+      xml += '  <Style ss:ID="VoidCell">\n';
+      xml += '   <Alignment ss:Vertical="Center"/>\n';
+      xml += '   <Font ss:Color="#888888" ss:StrikeThrough="1"/>\n';
+      xml += '  </Style>\n';
+      xml += ' </Styles>\n';
+      xml += ' <Worksheet ss:Name="Registro HACCP">\n';
+      xml += '  <Table>\n';
+
+      xml += '   <Row ss:Height="24">\n';
+      EXPORT_HEADERS.forEach(h => {
+        xml += `    <Cell ss:StyleID="Header"><Data ss:Type="String">${escapeXml(h)}</Data></Cell>\n`;
+      });
+      xml += '   </Row>\n';
+
+      registryData.forEach(r => {
+        const style = !isActive(r) ? 'VoidCell' : isNonConforme(r) ? 'NcCell' : 'DefaultCell';
+        xml += '   <Row ss:Height="20">\n';
+        exportRow(r).forEach(v => {
+          xml += `    <Cell ss:StyleID="${style}"><Data ss:Type="String">${escapeXml(v)}</Data></Cell>\n`;
+        });
+        xml += '   </Row>\n';
+      });
+
+      xml += '  </Table>\n';
+      xml += ' </Worksheet>\n';
+      xml += '</Workbook>';
+
+      downloadBlob(new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' }), exportFileBase() + '.xls');
+      showToast("Excel scaricato!");
+    }
+
+    /* ===== BACKUP E RIPRISTINO (JSON) ===== */
+    async function exportFullBackup() {
+      const backupData = {
+        appVersion: APP_VERSION,
+        exportDate: new Date().toISOString(),
+        companyConfig: companyConfig,
+        registryData: registryData
+      };
+
+      const now = new Date();
+      const stamp = `${toLocalISO(now)}_${pad2(now.getHours())}${pad2(now.getMinutes())}`;
+      downloadBlob(
+        new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' }),
+        `${(companyConfig.companyName || 'Registro').replace(/\s+/g, '_')}_Backup_HACCP_${stamp}.json`
+      );
+
+      appMeta.lastBackup = now.toISOString();
+      await persistMeta();
+      checkBackupReminder();
+      renderStorageStatus();
+      showToast("Backup salvato nella cartella Download");
+    }
+
+    function triggerImportJSON() {
+      document.getElementById('import-file-input').click();
+    }
+
+    function importFullBackup(event) {
+      const file = event.target.files[0];
+      event.target.value = '';
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        let importedRegistry;
+        let importedConfig = null;
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            importedRegistry = imported;
+          } else if (imported && Array.isArray(imported.registryData)) {
+            importedRegistry = imported.registryData;
+            importedConfig = imported.companyConfig || null;
+          } else {
+            throw new Error("Formato non valido");
+          }
+          if (!importedRegistry.every(r => r && typeof r === 'object' && r.id)) {
+            throw new Error("Record senza ID");
+          }
+        } catch (err) {
+          showToast("File di backup non valido.");
+          return;
+        }
+
+        const ok = confirm(
+          `Il ripristino SOSTITUISCE il registro attuale (${registryData.length} record) ` +
+          `con quello del file (${importedRegistry.length} record).\n\nProcedere?`
+        );
+        if (!ok) return;
+
+        registryData = importedRegistry.map(normalizeRecord);
+        if (importedConfig) {
+          companyConfig = { ...DEFAULT_CONFIG, ...importedConfig };
+          await persistConfig();
+          applyCompanyConfig();
+        }
+
+        await persistRegistry();
+        updateMetrics();
+        renderRegistry();
+        refreshIncomingLotDatalist();
+        generateInternalBatchCode();
+        checkBackupReminder();
+        closeSettingsModal();
+        applyDefaultOperator();
+        if (companyConfig.companyName) closeSetupModal();
+        showToast("Ripristino dati completato!");
+      };
+      reader.readAsText(file);
+    }
+
+    async function clearAllDataSafely() {
+      if (registryData.length === 0) {
+        showToast("Il registro è già vuoto.");
+        return;
+      }
+      const conferma = prompt(
+        `Stai per cancellare TUTTO il registro (${registryData.length} record) da questo tablet.\n` +
+        `Prima verrà scaricato automaticamente un backup.\n\nPer confermare scrivi SVUOTA:`
+      );
+      if (conferma === null) return;
+      if (conferma.trim().toUpperCase() !== 'SVUOTA') {
+        showToast("Conferma errata: nessun dato cancellato.");
+        return;
+      }
+
+      await exportFullBackup();
+      registryData = [];
+      await persistRegistry();
+      await storeDelete('draft');
+      updateMetrics();
+      renderRegistry();
+      refreshIncomingLotDatalist();
+      generateInternalBatchCode();
+      checkBackupReminder();
+      renderStorageStatus();
+      showToast("Registro svuotato (backup scaricato).");
+    }
+
+    /* ===== PRIMO AVVIO ===== */
+    function openSetupModal() {
+      document.getElementById('setup-company-name').value = companyConfig.companyName || '';
+      document.getElementById('setup-operator').value = companyConfig.defaultOperator || '';
+      document.getElementById('setup-email').value = companyConfig.defaultEmail || '';
+      document.getElementById('setup-modal').classList.remove('hidden');
+      setTimeout(() => document.getElementById('setup-company-name').focus(), 100);
+    }
+
+    function closeSetupModal() {
+      document.getElementById('setup-modal').classList.add('hidden');
+    }
+
+    async function completeSetup(e) {
+      e.preventDefault();
+      const name = document.getElementById('setup-company-name').value.trim();
+      if (!name) {
+        showToast("Inserisci il nome dell'attività");
+        return;
+      }
+      companyConfig.companyName = name;
+      companyConfig.defaultOperator = document.getElementById('setup-operator').value.trim();
+      companyConfig.defaultEmail = document.getElementById('setup-email').value.trim();
+      await persistConfig();
+      applyCompanyConfig();
+      applyDefaultOperator();
+      closeSetupModal();
+      showToast(`Benvenuto, ${name}!`);
+    }
+
+    /* Compila i campi operatore vuoti con l'operatore predefinito */
+    function applyDefaultOperator() {
+      ['operatore', 'lbl_operatore'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.value) el.value = companyConfig.defaultOperator || '';
+      });
+    }
+
+    /* ===== IMPOSTAZIONI ===== */
+    function openSettingsModal() {
+      document.getElementById('cfg-company-name').value = companyConfig.companyName;
+      document.getElementById('cfg-default-email').value = companyConfig.defaultEmail;
+      document.getElementById('cfg-default-operator').value = companyConfig.defaultOperator || '';
+      document.getElementById('cfg-label-width').value = companyConfig.labelWidth;
+      document.getElementById('cfg-temp-fresco').value = companyConfig.tempMaxFresco;
+      document.getElementById('cfg-temp-surgelato').value = companyConfig.tempMaxSurgelato;
+      renderStorageStatus();
+      document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settings-modal').classList.add('opacity-0', 'pointer-events-none');
+    }
+
+    async function saveSettings() {
+      const fresco = parseDecimal(document.getElementById('cfg-temp-fresco').value);
+      const surgelato = parseDecimal(document.getElementById('cfg-temp-surgelato').value);
+      if (fresco === null || surgelato === null) {
+        showToast("Limiti di temperatura non validi");
+        return;
+      }
+
+      const name = document.getElementById('cfg-company-name').value.trim();
+      if (!name) {
+        showToast("Il nome dell'attività è obbligatorio");
+        return;
+      }
+      companyConfig.companyName = name;
+      companyConfig.defaultOperator = document.getElementById('cfg-default-operator').value.trim();
+      companyConfig.defaultEmail = document.getElementById('cfg-default-email').value.trim();
+      companyConfig.labelWidth = document.getElementById('cfg-label-width').value;
+      companyConfig.tempMaxFresco = fresco;
+      companyConfig.tempMaxSurgelato = surgelato;
+      await persistConfig();
+      applyCompanyConfig();
+      closeSettingsModal();
+      showToast("Impostazioni salvate");
+    }
+
+    /* ===== UTILITÀ ===== */
+    function formatDate(dateStr) {
+      if (!dateStr) return 'N.D.';
+      const parts = String(dateStr).split('-');
+      if (parts.length === 3) {
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
+      return dateStr;
+    }
+
+    function formatDateTime(iso) {
+      if (!iso) return 'N.D.';
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return String(iso);
+      return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    function escapeXml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+    }
+  </script>
+</body>
+</html>
