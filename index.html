@@ -316,6 +316,9 @@
   <!-- DATALIST DINAMICA LOTTI RICEVUTI -->
   <datalist id="lotti-ricevuti-list"></datalist>
 
+  <!-- DATALIST DINAMICA MATERIE PRIME RICEVUTE -->
+  <datalist id="mp-ricevute-list"></datalist>
+
   <div class="max-w-md md:max-w-6xl mx-auto px-4 pt-4 pb-12">
 
     <!-- TOP APP HEADER -->
@@ -649,11 +652,11 @@
             <!-- CAMPO INPUT E AGGIUNTA LOTTO SINGOLO -->
             <div class="grid grid-cols-12 gap-1.5">
               <div class="col-span-5 relative flex items-center">
-                <input type="text" id="input_add_lotto_code" list="lotti-ricevuti-list" placeholder="Codice Lotto..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-2 pr-7 text-xs text-slate-100 focus:outline-none focus:border-emerald-400 font-mono" oninput="autoFetchProductNameForAdd(this.value)" ondblclick="startVoice('input_add_lotto_code')">
+                <input type="text" id="input_add_lotto_code" list="lotti-ricevuti-list" placeholder="Codice Lotto..." autocomplete="off" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-2 pr-7 text-xs text-slate-100 focus:outline-none focus:border-emerald-400 font-mono" oninput="autoFetchProductNameForAdd(this.value)" ondblclick="startVoice('input_add_lotto_code')">
                 <i class="fa-solid fa-microphone mic-icon absolute right-1.5 text-slate-400 text-xs cursor-pointer p-1" onclick="startVoice('input_add_lotto_code')"></i>
               </div>
               <div class="col-span-5 relative flex items-center">
-                <input type="text" id="input_add_lotto_name" list="prodotti-list" placeholder="Nome Materia Prima..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-2 pr-7 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" ondblclick="startVoice('input_add_lotto_name')">
+                <input type="text" id="input_add_lotto_name" list="mp-ricevute-list" placeholder="Nome Materia Prima..." autocomplete="off" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-2 pr-7 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" oninput="autoFetchLotForProduct(this.value)" ondblclick="startVoice('input_add_lotto_name')">
                 <i class="fa-solid fa-microphone mic-icon absolute right-1.5 text-slate-400 text-xs cursor-pointer p-1" onclick="startVoice('input_add_lotto_name')"></i>
               </div>
               <div class="col-span-2">
@@ -662,6 +665,10 @@
                 </button>
               </div>
             </div>
+
+            <button type="button" onclick="openLotPicker()" class="w-full py-2.5 bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+              <i class="fa-solid fa-truck-ramp-box"></i> Scegli dai lotti ricevuti
+            </button>
 
             <!-- LISTA DINAMICA DELLE MATERIE PRIME AGGIUNTE -->
             <div id="origin-lots-container" class="space-y-1.5 pt-1"></div>
@@ -827,6 +834,24 @@
         <i class="fa-solid fa-cloud-arrow-up"></i> Hai un backup? Ripristina da file (.json)
       </button>
     </form>
+  </div>
+
+  <!-- ELENCO LOTTI RICEVUTI DA CUI SCEGLIERE LE MATERIE PRIME -->
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="lot-picker-modal">
+    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-lg p-4 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-cardBorder pb-2">
+        <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-truck-ramp-box text-emerald-400"></i> Lotti ricevuti
+        </h3>
+        <button onclick="closeLotPicker()" class="text-slate-400 text-lg px-1">&times;</button>
+      </div>
+      <input type="text" id="lot-picker-search" placeholder="🔍 Cerca prodotto, lotto o fornitore..." autocomplete="off" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" oninput="renderLotPicker()">
+      <p class="text-[10px] text-slate-400">Tocca un lotto per aggiungerlo agli ingredienti della preparazione.</p>
+      <div id="lot-picker-list" class="space-y-1.5 overflow-y-auto flex-1 pr-1"></div>
+      <button onclick="closeLotPicker()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
+        <i class="fa-solid fa-check"></i> FATTO
+      </button>
+    </div>
   </div>
 
   <!-- SETTINGS & DATA SECURITY MODAL -->
@@ -1656,13 +1681,58 @@
     }
 
     /* ===== MATERIE PRIME DI ORIGINE PER LE PREPARAZIONI ===== */
+
+    /* Lotti registrati nella scheda Ricevimento (non annullati), dal più recente */
+    function receivedLots() {
+      const seen = new Set();
+      return registryData.filter(item => {
+        if (!isActive(item) || item.tipo_prodotto === 'Lavorato Interno' || !item.lotto) return false;
+        const key = item.lotto.toLowerCase() + '|' + String(item.nome_prodotto || '').toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function lotOptionLabel(item) {
+      const parts = [item.nome_prodotto, item.fornitore, 'scad. ' + formatDate(item.scadenza)];
+      if (isNonConforme(item)) parts.push('NON CONFORME');
+      return parts.join(' · ');
+    }
+
+    function fillLotDatalist(items) {
+      document.getElementById('lotti-ricevuti-list').innerHTML = items
+        .map(item => `<option value="${escapeHtml(item.lotto)}">${escapeHtml(lotOptionLabel(item))}</option>`)
+        .join('');
+    }
+
+    /* Lotto scelto o digitato: compila il nome della materia prima */
     function autoFetchProductNameForAdd(lotCode) {
       if (!lotCode || !lotCode.trim()) return;
       const searchLot = lotCode.trim().toLowerCase();
 
-      const foundMatch = registryData.find(item => isActive(item) && item.lotto && item.lotto.toLowerCase() === searchLot);
+      const foundMatch = receivedLots().find(item => item.lotto.toLowerCase() === searchLot);
       if (foundMatch && foundMatch.nome_prodotto) {
         document.getElementById('input_add_lotto_name').value = foundMatch.nome_prodotto;
+      }
+    }
+
+    /* Materia prima scelta: propone i suoi lotti ricevuti (il più recente nel campo) */
+    function autoFetchLotForProduct(productName) {
+      const name = String(productName || '').trim().toLowerCase();
+      const all = receivedLots();
+      const matches = name ? all.filter(item => String(item.nome_prodotto || '').toLowerCase() === name) : [];
+
+      fillLotDatalist(matches.length ? matches : all);
+      if (!matches.length) return;
+
+      const codeEl = document.getElementById('input_add_lotto_code');
+      const current = codeEl.value.trim().toLowerCase();
+      if (!matches.some(item => item.lotto.toLowerCase() === current)) {
+        codeEl.value = matches[0].lotto;
+      }
+      if (matches.length > 1) {
+        showToast(`${matches.length} lotti ricevuti per questo prodotto: verifica il lotto`);
       }
     }
 
@@ -1678,17 +1748,98 @@
         return;
       }
 
+      if (pushOriginRawMaterial(code, name)) {
+        codeEl.value = '';
+        nameEl.value = '';
+        fillLotDatalist(receivedLots());
+      }
+    }
+
+    /* Aggiunge un ingrediente; avvisa se il lotto non è utilizzabile */
+    function pushOriginRawMaterial(code, name) {
+      if (code && addedOriginRawMaterials.some(m => m.code === code)) {
+        showToast(`Il lotto ${code} è già tra gli ingredienti`);
+        return false;
+      }
+
       addedOriginRawMaterials.push({
         id: 'MP-' + Date.now() + '-' + Math.floor(Math.random() * 1000),
         code: code || 'SENZA LOTTO',
         name: name || 'Materia Prima non specificata'
       });
-      codeEl.value = '';
-      nameEl.value = '';
-
       renderOriginRawMaterials();
       saveLabelDraft();
-      showToast("Lotto ingrediente aggiunto");
+
+      const prodDate = document.getElementById('lbl_data_prod').value || todayLocal();
+      const rec = code ? receivedLots().find(item => item.lotto.toUpperCase() === code) : null;
+      if (code && !rec) {
+        showToast("Lotto aggiunto, ma non risulta tra quelli ricevuti");
+      } else if (rec && rec.scadenza && rec.scadenza < prodDate) {
+        showToast(`⚠ Attenzione: il lotto ${code} è scaduto il ${formatDate(rec.scadenza)}`);
+      } else if (rec && isNonConforme(rec)) {
+        showToast(`⚠ Attenzione: il lotto ${code} è registrato come NON CONFORME`);
+      } else {
+        showToast("Lotto ingrediente aggiunto");
+      }
+      return true;
+    }
+
+    /* ===== ELENCO A TOCCO DEI LOTTI RICEVUTI ===== */
+    function openLotPicker() {
+      document.getElementById('lot-picker-search').value = '';
+      renderLotPicker();
+      document.getElementById('lot-picker-modal').classList.remove('hidden');
+    }
+
+    function closeLotPicker() {
+      document.getElementById('lot-picker-modal').classList.add('hidden');
+    }
+
+    function renderLotPicker() {
+      const q = document.getElementById('lot-picker-search').value.trim().toLowerCase();
+      const prodDate = document.getElementById('lbl_data_prod').value || todayLocal();
+      const items = receivedLots().filter(item => !q ||
+        [item.nome_prodotto, item.lotto, item.fornitore].some(v => v && String(v).toLowerCase().includes(q)));
+      const list = document.getElementById('lot-picker-list');
+
+      if (!items.length) {
+        list.innerHTML = `<div class="text-center py-6 text-slate-500 text-xs">${receivedLots().length ? 'Nessun lotto trovato.' : 'Nessun lotto registrato nella scheda Ricevimento.'}</div>`;
+        return;
+      }
+
+      list.innerHTML = items.map(item => {
+        const added = addedOriginRawMaterials.some(m => m.code === item.lotto.toUpperCase());
+        const expired = item.scadenza && item.scadenza < prodDate;
+        const badges = [
+          added ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">AGGIUNTO</span>' : '',
+          expired ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-500/20 text-amber-300 border border-amber-500/30">SCADUTO</span>' : '',
+          isNonConforme(item) ? '<span class="px-1.5 py-0.5 rounded text-[9px] font-black bg-rose-500/20 text-rose-300 border border-rose-500/30">NON CONFORME</span>' : ''
+        ].join(' ');
+        return `
+          <button type="button" data-lot="${escapeHtml(item.lotto)}" data-name="${escapeHtml(item.nome_prodotto)}" onclick="pickReceivedLot(this)" class="w-full text-left bg-inputBg border ${added ? 'border-emerald-500/50' : 'border-cardBorder'} rounded-xl px-3 py-2 active:scale-[0.99]">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-slate-100">${escapeHtml(item.nome_prodotto)}</div>
+                <div class="text-[10.5px] text-slate-400">
+                  Lotto <span class="font-mono font-bold text-emerald-400">${escapeHtml(item.lotto)}</span>
+                  · ${escapeHtml(item.fornitore)} · ric. ${formatDate(item.data_ricevimento)} · scad. ${formatDate(item.scadenza)}
+                </div>
+              </div>
+              <div class="flex-shrink-0 flex gap-1">${badges}</div>
+            </div>
+          </button>`;
+      }).join('');
+    }
+
+    function pickReceivedLot(btn) {
+      const code = btn.dataset.lot.toUpperCase();
+      if (addedOriginRawMaterials.some(m => m.code === code)) {
+        const item = addedOriginRawMaterials.find(m => m.code === code);
+        removeOriginRawMaterial(item.id);
+      } else {
+        pushOriginRawMaterial(code, btn.dataset.name);
+      }
+      renderLotPicker();
     }
 
     function removeOriginRawMaterial(id) {
@@ -1723,22 +1874,16 @@
       `).join('');
     }
 
+    /* Suggerimenti dei due campi: solo lotti e materie prime del Ricevimento */
     function refreshIncomingLotDatalist() {
-      const dl = document.getElementById('lotti-ricevuti-list');
-      if (!dl) return;
+      const lots = receivedLots();
+      fillLotDatalist(lots);
 
-      const uniqueLots = new Map();
-      registryData.forEach(item => {
-        if (isActive(item) && item.lotto && !uniqueLots.has(item.lotto)) {
-          uniqueLots.set(item.lotto, item.nome_prodotto);
-        }
-      });
-
-      let optionsHtml = '';
-      uniqueLots.forEach((prodName, lotCode) => {
-        optionsHtml += `<option value="${escapeHtml(lotCode)}">${escapeHtml(prodName)}</option>`;
-      });
-      dl.innerHTML = optionsHtml;
+      const names = [...new Set(lots.map(item => item.nome_prodotto).filter(Boolean))]
+        .sort((a, b) => a.localeCompare(b, 'it'));
+      document.getElementById('mp-ricevute-list').innerHTML = names
+        .map(n => `<option value="${escapeHtml(n)}"></option>`)
+        .join('');
     }
 
     /* ===== REGISTRAZIONE RICEVIMENTO ===== */
