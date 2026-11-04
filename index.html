@@ -441,13 +441,13 @@
             <i class="fa-solid fa-database text-emerald-400"></i> Registro
           </h2>
           <div class="flex items-center gap-1.5">
-            <button onclick="shareFullRegistryEmail()" class="px-2 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold active:scale-95">
+            <button onclick="openPdfModal('email')" class="px-2 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold active:scale-95">
               <i class="fa-solid fa-envelope"></i> Email
             </button>
-            <button onclick="openPdfModal()" class="px-2.5 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
+            <button onclick="openPdfModal('pdf')" class="px-2.5 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
               <i class="fa-solid fa-file-pdf"></i> PDF
             </button>
-            <button onclick="exportExcel()" class="px-2.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
+            <button onclick="openPdfModal('excel')" class="px-2.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
               <i class="fa-solid fa-file-excel"></i> Excel (.xls)
             </button>
           </div>
@@ -711,7 +711,7 @@
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-file-pdf text-red-400"></i> Stampa registro in PDF
+          <i id="pdf-modal-icon" class="fa-solid fa-file-pdf text-red-400"></i> <span id="pdf-modal-title">Stampa registro in PDF</span>
         </h3>
         <button onclick="closePdfModal()" class="text-slate-400 text-lg px-1">&times;</button>
       </div>
@@ -733,7 +733,7 @@
       </div>
       <p id="pdf-count" class="text-[11px] text-slate-400"></p>
       <button onclick="generatePdfFromModal()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
-        <i class="fa-solid fa-file-arrow-down"></i> GENERA PDF
+        <i id="pdf-modal-btn-icon" class="fa-solid fa-file-arrow-down"></i> <span id="pdf-modal-btn">GENERA PDF</span>
       </button>
     </div>
   </div>
@@ -2433,13 +2433,20 @@
       window.location.href = `mailto:${email}?subject=${subject}&body=${encodeURIComponent(reportText(currentSelectedReport))}`;
     }
 
-    function shareFullRegistryEmail() {
+    function shareFullRegistryEmail(dal = '', al = '') {
       const email = companyConfig.defaultEmail || '';
-      const subject = encodeURIComponent(`${companyConfig.companyName} - Registro Rintracciabilità OSA`);
+      const periodo = dal || al ? ` dal ${formatDate(dal)} al ${formatDate(al)}` : '';
+      const subject = encodeURIComponent(`${companyConfig.companyName} - Registro Rintracciabilità OSA${periodo}`);
       const MAX_BODY = 1800;
 
-      const active = registryData.filter(isActive);
-      let bodyText = `${companyConfig.companyName.toUpperCase()} - REGISTRO RICEVIMENTO MERCI E RINTRACCIABILITÀ\n\n`;
+      const active = pdfRecordsInRange(dal, al).filter(isActive);
+      if (active.length === 0) {
+        showToast("Nessuna registrazione attiva nel periodo scelto.");
+        return false;
+      }
+      let bodyText = `${companyConfig.companyName.toUpperCase()} - REGISTRO RICEVIMENTO MERCI E RINTRACCIABILITÀ\n`;
+      if (dal || al) bodyText += `Periodo: ${formatDate(dal)} - ${formatDate(al)}\n`;
+      bodyText += '\n';
       let included = 0;
       for (const item of active) {
         const line = `${included + 1}. [${formatDate(item.data_ricevimento)}] ${item.nome_prodotto} | Lotto: ${item.lotto} | ${item.fornitore} | Scad: ${formatDate(item.scadenza)}${isNonConforme(item) ? ' | NON CONFORME' : ''}\n`;
@@ -2453,6 +2460,7 @@
       }
 
       window.location.href = `mailto:${email}?subject=${subject}&body=${encodeURIComponent(bodyText)}`;
+      return true;
     }
 
     /* ===== EXPORT ===== */
@@ -2506,6 +2514,12 @@
       });
     }
 
+    function periodSuffix(dal, al, records) {
+      if (!dal && !al) return '';
+      const date = records.map(r => r.data_ricevimento).filter(Boolean).sort();
+      return `_dal_${dal || date[0]}_al_${al || date[date.length - 1]}`;
+    }
+
     function setPdfRange(tipo) {
       const oggi = todayLocal();
       const [y, m] = oggi.split('-').map(Number);
@@ -2539,11 +2553,24 @@
       el.textContent = n === 1 ? '1 registrazione nel periodo.' : `${n} registrazioni nel periodo (annullate comprese).`;
     }
 
-    function openPdfModal() {
+    const PERIOD_MODES = {
+      pdf: { titolo: 'Stampa registro in PDF', icona: 'fa-file-pdf text-red-400', pulsante: 'GENERA PDF', iconaPulsante: 'fa-file-arrow-down', esegui: exportPDF },
+      excel: { titolo: 'Esporta registro in Excel', icona: 'fa-file-excel text-emerald-400', pulsante: 'SCARICA EXCEL', iconaPulsante: 'fa-file-arrow-down', esegui: exportExcel },
+      email: { titolo: 'Invia registro per email', icona: 'fa-envelope text-blue-400', pulsante: 'APRI EMAIL', iconaPulsante: 'fa-paper-plane', esegui: shareFullRegistryEmail }
+    };
+    let periodMode = 'pdf';
+
+    function openPdfModal(mode = 'pdf') {
       if (registryData.length === 0) {
         showToast("Nessun dato da esportare.");
         return;
       }
+      periodMode = PERIOD_MODES[mode] ? mode : 'pdf';
+      const cfg = PERIOD_MODES[periodMode];
+      document.getElementById('pdf-modal-title').textContent = cfg.titolo;
+      document.getElementById('pdf-modal-icon').className = `fa-solid ${cfg.icona}`;
+      document.getElementById('pdf-modal-btn').textContent = cfg.pulsante;
+      document.getElementById('pdf-modal-btn-icon').className = `fa-solid ${cfg.iconaPulsante}`;
       setPdfRange('mese');
       document.getElementById('pdf-modal').classList.remove('hidden');
     }
@@ -2563,7 +2590,7 @@
         showToast("Nessuna registrazione nel periodo scelto.");
         return;
       }
-      if (exportPDF(dal, al)) closePdfModal();
+      if (PERIOD_MODES[periodMode].esegui(dal, al)) closePdfModal();
     }
 
     function exportPDF(dal = '', al = '') {
@@ -2701,16 +2728,16 @@
         doc.text(`Pagina ${i} di ${tot}`, pageW - 10, pageH - 6, { align: 'right' });
       }
 
-      const suffisso = dal || al ? `_dal_${dal || date[0]}_al_${al || date[date.length - 1]}` : '';
-      downloadBlob(doc.output('blob'), exportFileBase() + suffisso + '.pdf');
+      downloadBlob(doc.output('blob'), exportFileBase() + periodSuffix(dal, al, records) + '.pdf');
       showToast("PDF scaricato!");
       return true;
     }
 
-    function exportExcel() {
-      if (registryData.length === 0) {
+    function exportExcel(dal = '', al = '') {
+      const selezione = pdfRecordsInRange(dal, al);
+      if (selezione.length === 0) {
         showToast("Nessun dato da esportare.");
-        return;
+        return false;
       }
 
       let xml = '<?xml version="1.0" encoding="UTF-8"?>\n';
@@ -2746,7 +2773,7 @@
       });
       xml += '   </Row>\n';
 
-      registryData.forEach(r => {
+      selezione.forEach(r => {
         const style = !isActive(r) ? 'VoidCell' : isNonConforme(r) ? 'NcCell' : 'DefaultCell';
         xml += '   <Row ss:Height="20">\n';
         exportRow(r).forEach(v => {
@@ -2759,8 +2786,9 @@
       xml += ' </Worksheet>\n';
       xml += '</Workbook>';
 
-      downloadBlob(new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' }), exportFileBase() + '.xls');
+      downloadBlob(new Blob([xml], { type: 'application/vnd.ms-excel;charset=utf-8' }), exportFileBase() + periodSuffix(dal, al, selezione) + '.xls');
       showToast("Excel scaricato!");
+      return true;
     }
 
     /* ===== BACKUP E RIPRISTINO (JSON) ===== */
