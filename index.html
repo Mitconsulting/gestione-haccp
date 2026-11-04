@@ -774,6 +774,13 @@
           <button onclick="clearAllDataSafely()" class="w-full py-2 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95">
             <i class="fa-solid fa-trash-arrow-up"></i> Svuota Registro Dati
           </button>
+
+          <button onclick="factoryReset()" class="w-full py-2 bg-rose-600/20 text-rose-300 border border-rose-500/40 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-rotate-left"></i> Cancella tutti i dati (installazione pulita)
+          </button>
+          <p class="text-[10px] text-slate-500 leading-normal">
+            "Svuota Registro" cancella solo le registrazioni. "Cancella tutti i dati" elimina anche impostazioni ed elenchi di fornitori, prodotti e ricette: al riavvio l'app chiede di nuovo il nome dell'attività. In entrambi i casi viene prima scaricato un backup.
+          </p>
         </div>
       </div>
 
@@ -2645,6 +2652,50 @@
       checkBackupReminder();
       renderStorageStatus();
       showToast("Registro svuotato (backup scaricato).");
+    }
+
+    async function storeClearAll() {
+      try {
+        Object.keys(localStorage)
+          .filter(k => k.startsWith(LS_PREFIX))
+          .forEach(k => localStorage.removeItem(k));
+      } catch (e) {}
+      if (useLocalStorageFallback) return;
+      const db = await openDb();
+      await new Promise((resolve, reject) => {
+        const tx = db.transaction(DB_STORE, 'readwrite');
+        tx.objectStore(DB_STORE).clear();
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    /* Cancella registro, impostazioni, anagrafiche e bozze: l'app riparte come appena installata */
+    async function factoryReset() {
+      const conferma = prompt(
+        "INSTALLAZIONE PULITA\n\n" +
+        `Verranno cancellati da questo tablet: registro (${registryData.length} record), impostazioni ` +
+        "(nome attività, operatore, email, limiti di temperatura), elenchi di fornitori, prodotti e ricette, bozze.\n" +
+        "Prima verrà scaricato automaticamente un backup completo.\n\n" +
+        "Per confermare scrivi CANCELLA TUTTO:"
+      );
+      if (conferma === null) return;
+      if (conferma.trim().toUpperCase() !== 'CANCELLA TUTTO') {
+        showToast("Conferma errata: nessun dato cancellato.");
+        return;
+      }
+
+      await exportFullBackup();
+      try {
+        await storeClearAll();
+      } catch (e) {
+        showStorageError("Cancellazione non riuscita: " + (e && e.message ? e.message : e) + ". Chiudi e riapri l'app e riprova.");
+        return;
+      }
+      closeSettingsModal();
+      showToast("Dati cancellati: l'app riparte da zero");
+      // Lascia il tempo al download del backup prima di ricaricare
+      setTimeout(() => location.reload(), 1500);
     }
 
     /* ===== ANAGRAFICHE: FORNITORI E PRODOTTI ===== */
