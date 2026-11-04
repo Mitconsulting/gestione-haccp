@@ -299,7 +299,7 @@
             <div class="space-y-1">
               <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 <i class="fa-solid fa-truck text-emerald-400 mr-1"></i> Fornitore <span class="text-[9px] text-slate-500 font-normal lowercase">(seleziona o detta)</span>
-                <button type="button" onclick="openAnagrafiche('fornitori')" class="float-right normal-case tracking-normal text-[10px] font-bold text-emerald-400 px-1" title="Gestisci fornitori"><i class="fa-solid fa-pen-to-square"></i> Gestisci</button>
+                <button type="button" onclick="openAnagrafiche('fornitori')" class="float-right -mt-1 normal-case tracking-normal text-[11px] font-extrabold text-slate-950 bg-emerald-500 hover:bg-emerald-400 rounded-lg px-2.5 py-1 shadow shadow-emerald-500/30 active:scale-95" title="Gestisci fornitori"><i class="fa-solid fa-pen-to-square"></i> Gestisci</button>
               </label>
               <div class="relative flex items-center">
                 <input type="text" id="fornitore" list="fornitori-list" placeholder="Seleziona o scrivi fornitore..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required ondblclick="startVoice('fornitore')">
@@ -311,7 +311,7 @@
             <div class="space-y-1">
               <label class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 <i class="fa-solid fa-box text-emerald-400 mr-1"></i> Nome Prodotto <span class="text-[9px] text-slate-500 font-normal lowercase">(seleziona o detta)</span>
-                <button type="button" onclick="openAnagrafiche('prodotti')" class="float-right normal-case tracking-normal text-[10px] font-bold text-emerald-400 px-1" title="Gestisci prodotti"><i class="fa-solid fa-pen-to-square"></i> Gestisci</button>
+                <button type="button" onclick="openAnagrafiche('prodotti')" class="float-right -mt-1 normal-case tracking-normal text-[11px] font-extrabold text-slate-950 bg-emerald-500 hover:bg-emerald-400 rounded-lg px-2.5 py-1 shadow shadow-emerald-500/30 active:scale-95" title="Gestisci prodotti"><i class="fa-solid fa-pen-to-square"></i> Gestisci</button>
               </label>
               <div class="relative flex items-center">
                 <input type="text" id="nome_prodotto" list="prodotti-list" placeholder="Seleziona o scrivi prodotto..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400" required ondblclick="startVoice('nome_prodotto')">
@@ -468,7 +468,9 @@
     </div>
 
     <!-- MAIN VIEW 2: STAMPA ETICHETTE LAVORATI -->
-    <div id="view-etichette" class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start hidden">
+    <div id="view-etichette" class="hidden">
+    <!-- la griglia sta in un contenitore interno: "md:grid" sullo stesso elemento annullava "hidden" su tablet -->
+    <div class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start">
 
       <div class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-4">
         <h2 class="text-sm font-extrabold text-slate-100 flex items-center gap-2 border-b border-cardBorder pb-2.5">
@@ -480,7 +482,7 @@
           <!-- NOME PREPARAZIONE / SEMILAVORATO -->
           <div class="space-y-1">
             <label class="text-[11px] font-bold text-slate-400 uppercase">Nome Preparazione / Semilavorato *
-              <button type="button" onclick="openAnagrafiche('ricette')" class="float-right normal-case text-[10px] font-bold text-emerald-400 px-1" title="Gestisci ricette"><i class="fa-solid fa-pen-to-square"></i> Gestisci</button>
+              <button type="button" onclick="openAnagrafiche('ricette')" class="float-right -mt-1 normal-case tracking-normal text-[11px] font-extrabold text-slate-950 bg-emerald-500 hover:bg-emerald-400 rounded-lg px-2.5 py-1 shadow shadow-emerald-500/30 active:scale-95" title="Gestisci ricette"><i class="fa-solid fa-pen-to-square"></i> Gestisci</button>
             </label>
             <div class="relative flex items-center">
               <input type="text" id="lbl_nome" list="preparations-list" placeholder="Seleziona o scrivi ricetta..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400 uppercase" required ondblclick="startVoice('lbl_nome')">
@@ -633,6 +635,7 @@
         </div>
       </div>
 
+    </div>
     </div>
 
   </div>
