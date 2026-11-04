@@ -153,53 +153,8 @@
   <!-- DATALIST PRODOTTI (dall'anagrafica salvata sul tablet) -->
   <datalist id="prodotti-list"></datalist>
 
-  <!-- DATALIST PREPARAZIONI / SEMILAVORATI -->
-  <datalist id="preparations-list">
-    <option value="CARPACCIO DI PESCE"></option>
-    <option value="CARPACCIO SAN MARCO MARINATO"></option>
-    <option value="CHEESECAKE"></option>
-    <option value="COSTALINE DI MAIALE"></option>
-    <option value="COSTOLETTE DI AGNELLO"></option>
-    <option value="COULIS DI AGRUMI"></option>
-    <option value="CREAM TART SALATA"></option>
-    <option value="CREMA ALLA FRUTTA"></option>
-    <option value="CREMA COTTA AL PARMIGIANO"></option>
-    <option value="CREMA DI LEGUMI E ORTAGGI"></option>
-    <option value="CREMA DI SEDANO RAPA"></option>
-    <option value="CREMA PASTICCERA"></option>
-    <option value="CREMA SALATA SPALMABILE"></option>
-    <option value="CRUMBLE"></option>
-    <option value="FILETTO DI MAIALINO LUCANO"></option>
-    <option value="FONDUTA AL PARMIGIANO"></option>
-    <option value="FRITTURA DI PESCE"></option>
-    <option value="GIRELLO DI MANZO B.T."></option>
-    <option value="GIRELLE DI PASTA ALL’UOVO"></option>
-    <option value="LONZINO DI MAIALE MARINATO"></option>
-    <option value="MARMELLATA"></option>
-    <option value="MERINGHE"></option>
-    <option value="MORBIDO DI MANZO B.T. BRASATO"></option>
-    <option value="MOUSSE CIOCCOLATO E PANNA"></option>
-    <option value="MOUSSE CON FRUTTA"></option>
-    <option value="PESCE SPADA MARINATO"></option>
-    <option value="PRODOTTI DELLA PESCA FRESCHI"></option>
-    <option value="ROSOLIO"></option>
-    <option value="ROTOLO DI PANE E CIPOLLA"></option>
-    <option value="ROTOLO DI SALMONE AFFUMICATO"></option>
-    <option value="ROYAL DI UOVA"></option>
-    <option value="SALMON MARINATO A SECCO"></option>
-    <option value="SALSA ALLO ZABAIONE"></option>
-    <option value="SELLA DI MAIALINO B.T."></option>
-    <option value="SFERE SALATE"></option>
-    <option value="STRUDEL IN PASTA FILLO"></option>
-    <option value="SUGO A BASE DI CARNE"></option>
-    <option value="SUGO A BASE DI PRODOTTI ITTICI"></option>
-    <option value="SUGO PASSATA DI POMODORO"></option>
-    <option value="TAGLIATA DI MANZO"></option>
-    <option value="TATAKI DI TONNO"></option>
-    <option value="TONNO MARINATO"></option>
-    <option value="TORTINO DI PANE"></option>
-    <option value="VELLUTATA DI VERDURE"></option>
-  </datalist>
+  <!-- DATALIST RICETTE (dall'anagrafica salvata sul tablet) -->
+  <datalist id="preparations-list"></datalist>
 
   <!-- DATALIST DESTINAZIONE / STOCCAGGIO -->
   <datalist id="destinazioni-list">
@@ -524,7 +479,9 @@
 
           <!-- NOME PREPARAZIONE / SEMILAVORATO -->
           <div class="space-y-1">
-            <label class="text-[11px] font-bold text-slate-400 uppercase">Nome Preparazione / Semilavorato *</label>
+            <label class="text-[11px] font-bold text-slate-400 uppercase">Nome Preparazione / Semilavorato *
+              <button type="button" onclick="openAnagrafiche('ricette')" class="float-right normal-case text-[10px] font-bold text-emerald-400 px-1" title="Gestisci ricette"><i class="fa-solid fa-pen-to-square"></i> Gestisci</button>
+            </label>
             <div class="relative flex items-center">
               <input type="text" id="lbl_nome" list="preparations-list" placeholder="Seleziona o scrivi ricetta..." class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl pl-3 pr-10 text-sm text-slate-100 focus:outline-none focus:border-emerald-400 uppercase" required ondblclick="startVoice('lbl_nome')">
               <i class="fa-solid fa-microphone mic-icon absolute right-3 text-slate-400 text-base cursor-pointer p-1" onclick="startVoice('lbl_nome')"></i>
@@ -794,7 +751,7 @@
       </div>
 
       <button onclick="openAnagrafiche('fornitori')" class="w-full py-2.5 bg-inputBg border border-cardBorder text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
-        <i class="fa-solid fa-address-book text-emerald-400"></i> Fornitori e prodotti
+        <i class="fa-solid fa-address-book text-emerald-400"></i> Fornitori, prodotti e ricette
       </button>
 
       <!-- SEZIONE DEDICATA BACKUP E RIPRISTINO SICUREZZA DATI -->
@@ -835,14 +792,15 @@
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-lg p-4 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-address-book text-emerald-400"></i> Fornitori e prodotti
+          <i class="fa-solid fa-address-book text-emerald-400"></i> Fornitori, prodotti e ricette
         </h3>
         <button onclick="closeAnagrafiche()" class="text-slate-400 text-lg px-1">&times;</button>
       </div>
 
-      <div class="grid grid-cols-2 gap-1.5 p-1 bg-inputBg border border-cardBorder rounded-xl">
+      <div class="grid grid-cols-3 gap-1.5 p-1 bg-inputBg border border-cardBorder rounded-xl">
         <button type="button" id="anag-tab-fornitori" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400" onclick="setAnagTab('fornitori')"><i class="fa-solid fa-truck"></i> Fornitori <span id="anag-count-fornitori"></span></button>
         <button type="button" id="anag-tab-prodotti" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400" onclick="setAnagTab('prodotti')"><i class="fa-solid fa-box"></i> Prodotti <span id="anag-count-prodotti"></span></button>
+        <button type="button" id="anag-tab-ricette" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400" onclick="setAnagTab('ricette')"><i class="fa-solid fa-utensils"></i> Ricette <span id="anag-count-ricette"></span></button>
       </div>
 
       <form onsubmit="addAnagItem(event)" class="flex gap-1.5">
@@ -897,7 +855,7 @@
     ];
 
     /* Elenchi iniziali dell'anagrafica: al primo avvio vengono copiati nell'archivio del tablet,
-       poi si gestiscono da Impostazioni → Fornitori e prodotti */
+       poi si gestiscono da Impostazioni → Fornitori, prodotti e ricette */
     const DEFAULT_FORNITORI = [
       "CASEIFICIO MALDERA S.R.L",
       "CASEIFICIO OFFICINA DEL LATTE",
@@ -1007,6 +965,53 @@
       "Zucchero"
     ];
 
+    const DEFAULT_RICETTE = [
+      "CARPACCIO DI PESCE",
+      "CARPACCIO SAN MARCO MARINATO",
+      "CHEESECAKE",
+      "COSTALINE DI MAIALE",
+      "COSTOLETTE DI AGNELLO",
+      "COULIS DI AGRUMI",
+      "CREAM TART SALATA",
+      "CREMA ALLA FRUTTA",
+      "CREMA COTTA AL PARMIGIANO",
+      "CREMA DI LEGUMI E ORTAGGI",
+      "CREMA DI SEDANO RAPA",
+      "CREMA PASTICCERA",
+      "CREMA SALATA SPALMABILE",
+      "CRUMBLE",
+      "FILETTO DI MAIALINO LUCANO",
+      "FONDUTA AL PARMIGIANO",
+      "FRITTURA DI PESCE",
+      "GIRELLO DI MANZO B.T.",
+      "GIRELLE DI PASTA ALL’UOVO",
+      "LONZINO DI MAIALE MARINATO",
+      "MARMELLATA",
+      "MERINGHE",
+      "MORBIDO DI MANZO B.T. BRASATO",
+      "MOUSSE CIOCCOLATO E PANNA",
+      "MOUSSE CON FRUTTA",
+      "PESCE SPADA MARINATO",
+      "PRODOTTI DELLA PESCA FRESCHI",
+      "ROSOLIO",
+      "ROTOLO DI PANE E CIPOLLA",
+      "ROTOLO DI SALMONE AFFUMICATO",
+      "ROYAL DI UOVA",
+      "SALMON MARINATO A SECCO",
+      "SALSA ALLO ZABAIONE",
+      "SELLA DI MAIALINO B.T.",
+      "SFERE SALATE",
+      "STRUDEL IN PASTA FILLO",
+      "SUGO A BASE DI CARNE",
+      "SUGO A BASE DI PRODOTTI ITTICI",
+      "SUGO PASSATA DI POMODORO",
+      "TAGLIATA DI MANZO",
+      "TATAKI DI TONNO",
+      "TONNO MARINATO",
+      "TORTINO DI PANE",
+      "VELLUTATA DI VERDURE"
+    ];
+
     const DEFAULT_CONFIG = {
       companyName: '',
       defaultOperator: '',
@@ -1020,7 +1025,7 @@
     let registryData = [];
     let companyConfig = { ...DEFAULT_CONFIG };
     let appMeta = {};
-    let anagrafiche = { fornitori: [], prodotti: [] };
+    let anagrafiche = { fornitori: [], prodotti: [], ricette: [] };
     let activeAllergens = [];
     let currentSelectedReport = null;
     let addedOriginRawMaterials = [];
@@ -1167,8 +1172,12 @@
       const an = await storeGet('anagrafiche');
       if (isValidAnagrafiche(an)) {
         anagrafiche = an;
+        if (!Array.isArray(anagrafiche.ricette)) {
+          anagrafiche.ricette = [...DEFAULT_RICETTE];
+          await persistAnagrafiche();
+        }
       } else {
-        anagrafiche = { fornitori: [...DEFAULT_FORNITORI], prodotti: [...DEFAULT_PRODOTTI] };
+        anagrafiche = { fornitori: [...DEFAULT_FORNITORI], prodotti: [...DEFAULT_PRODOTTI], ricette: [...DEFAULT_RICETTE] };
         await persistAnagrafiche();
       }
     }
@@ -2007,7 +2016,7 @@
       refreshIncomingLotDatalist();
       checkBackupReminder();
 
-      await offerToAddToAnagrafiche(entry.fornitore, entry.nome_prodotto);
+      await offerToAddToAnagrafiche([['fornitori', entry.fornitore], ['prodotti', entry.nome_prodotto]]);
 
       // Modulo pulito per il lotto successivo (evita doppie registrazioni)
       resetForm();
@@ -2277,6 +2286,7 @@
       renderRegistry();
       refreshIncomingLotDatalist();
       checkBackupReminder();
+      await offerToAddToAnagrafiche([['ricette', nome]]);
 
       // Pulisce il modulo: la preparazione successiva parte da zero
       document.getElementById('lbl_nome').value = '';
@@ -2594,6 +2604,7 @@
 
         if (importedAnag) {
           anagrafiche = importedAnag;
+          if (!Array.isArray(anagrafiche.ricette)) anagrafiche.ricette = [...DEFAULT_RICETTE];
           await persistAnagrafiche();
           renderAnagraficheDatalists();
         }
@@ -2641,9 +2652,11 @@
     }
 
     /* ===== ANAGRAFICHE: FORNITORI E PRODOTTI ===== */
+    const isPreparazione = r => r.tipo_prodotto === 'Lavorato Interno';
     const ANAG_TYPES = {
-      fornitori: { singolare: 'fornitore', campo: 'fornitore', datalist: 'fornitori-list', placeholder: 'Nuovo fornitore...' },
-      prodotti: { singolare: 'prodotto', campo: 'nome_prodotto', datalist: 'prodotti-list', placeholder: 'Nuovo prodotto...' }
+      fornitori: { singolare: 'fornitore', campo: 'fornitore', datalist: 'fornitori-list', placeholder: 'Nuovo fornitore...', usato: r => !isPreparazione(r) },
+      prodotti: { singolare: 'prodotto', campo: 'nome_prodotto', datalist: 'prodotti-list', placeholder: 'Nuovo prodotto...', usato: r => !isPreparazione(r) },
+      ricette: { singolare: 'ricetta', campo: 'nome_prodotto', datalist: 'preparations-list', placeholder: 'Nuova ricetta...', usato: isPreparazione, maiuscolo: true }
     };
     let anagTab = 'fornitori';
 
@@ -2701,10 +2714,10 @@
 
     /* Quante registrazioni attive usano ogni voce (solo informativo) */
     function anagUsage(type) {
-      const field = ANAG_TYPES[type].campo;
+      const { campo: field, usato } = ANAG_TYPES[type];
       const usage = new Map();
       registryData.forEach(r => {
-        if (!isActive(r) || !r[field]) return;
+        if (!isActive(r) || !usato(r) || !r[field]) return;
         const key = String(r[field]).trim().toLowerCase();
         usage.set(key, (usage.get(key) || 0) + 1);
       });
@@ -2742,16 +2755,17 @@
       }).join('');
     }
 
-    function normalizeAnagName(value) {
-      return String(value || '').trim().replace(/\s+/g, ' ');
+    function normalizeAnagName(value, type) {
+      const name = String(value || '').trim().replace(/\s+/g, ' ');
+      return type && ANAG_TYPES[type].maiuscolo ? name.toUpperCase() : name;
     }
 
     async function addAnagItem(e) {
       if (e) e.preventDefault();
       const input = document.getElementById('anag-new');
-      const name = normalizeAnagName(input.value);
+      const name = normalizeAnagName(input.value, anagTab);
       if (!name) {
-        showToast(`Scrivi il nome del ${ANAG_TYPES[anagTab].singolare}`);
+        showToast("Scrivi il nome da aggiungere");
         return;
       }
       if (anagrafiche[anagTab].some(v => sameName(v, name))) {
@@ -2770,7 +2784,7 @@
     async function editAnagItem(oldName) {
       const value = prompt(`Modifica ${ANAG_TYPES[anagTab].singolare}:`, oldName);
       if (value === null) return;
-      const name = normalizeAnagName(value);
+      const name = normalizeAnagName(value, anagTab);
       if (!name) {
         showToast("Il nome non può essere vuoto");
         return;
@@ -2792,7 +2806,7 @@
 
     async function deleteAnagItem(name) {
       const n = anagUsage(anagTab).get(name.toLowerCase()) || 0;
-      const msg = `Eliminare "${name}" dall'elenco ${anagTab}?` +
+      const msg = `Eliminare la voce "${name}" (${ANAG_TYPES[anagTab].singolare})?` +
         (n ? `\n\nÈ usato in ${n} registrazion${n === 1 ? 'e' : 'i'} del registro, che resteranno invariate.` : '');
       if (!confirm(msg)) return;
       anagrafiche[anagTab] = anagrafiche[anagTab].filter(v => v !== name);
@@ -2803,10 +2817,10 @@
     }
 
     /* Dopo una registrazione con fornitore o prodotto nuovi, propone di aggiungerli all'elenco */
-    async function offerToAddToAnagrafiche(fornitore, prodotto) {
-      const nuovi = [];
-      if (fornitore && !anagrafiche.fornitori.some(v => sameName(v, fornitore))) nuovi.push(['fornitori', normalizeAnagName(fornitore)]);
-      if (prodotto && !anagrafiche.prodotti.some(v => sameName(v, prodotto))) nuovi.push(['prodotti', normalizeAnagName(prodotto)]);
+    async function offerToAddToAnagrafiche(voci) {
+      const nuovi = voci
+        .filter(([type, name]) => name && !anagrafiche[type].some(v => sameName(v, name)))
+        .map(([type, name]) => [type, normalizeAnagName(name, type)]);
       if (!nuovi.length) return;
 
       const elenco = nuovi.map(([type, name]) => `• ${ANAG_TYPES[type].singolare}: ${name}`).join('\n');
