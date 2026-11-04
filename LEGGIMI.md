@@ -24,7 +24,7 @@ Al primo avvio l'app chiede il **nome dell'attività**, mostrato in intestazione
 Il nome sotto l'icona del tablet è "Gestione HACCP"; con Chrome su Android si può cambiare al momento dell'installazione.
 
 ## Aggiornare l'app
-Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.10`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
+Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.11`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
 
 ## Novità rispetto alla v1.1
 - Archivio IndexedDB al posto di localStorage, archiviazione persistente e stato dell'archivio nelle Impostazioni.
@@ -44,5 +44,5 @@ Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `
 - Ripristino del backup con conferma; "Svuota registro" richiede di scrivere SVUOTA e scarica prima un backup.
 - Etichette: i campi "Codice lotto" e "Nome materia prima" propongono solo i lotti e i prodotti registrati nel Ricevimento (scegliendo il prodotto si compila il lotto più recente e viceversa); pulsante "Scegli dai lotti ricevuti" con elenco a tocco, avvisi per lotti scaduti o non conformi.
 - Fornitori, prodotti e ricette modificabili (Impostazioni → Fornitori, prodotti e ricette, oppure "Gestisci" accanto ai campi di Ricevimento ed Etichette): aggiungi, modifica, elimina. Le registrazioni già salvate non cambiano. Dopo una registrazione con un fornitore, prodotto o ricetta nuovi, l'app propone di aggiungerlo all'elenco. L'anagrafica è inclusa nel backup.
-- Logo "Gestione HACCP" (scudo con cappello da chef, spunta e marchio MIT consulting) per icona del tablet, intestazione e schermata di primo avvio.
+- Logo (scudo con cappello da chef e spunta) per icona del tablet, intestazione e schermata di primo avvio.
 - Impostazioni → "Cancella tutti i dati (installazione pulita)": elimina registro, impostazioni, anagrafiche e bozze (conferma scrivendo CANCELLA TUTTO, backup scaricato prima); al riavvio riparte la configurazione iniziale.
