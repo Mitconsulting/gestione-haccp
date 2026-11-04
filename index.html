@@ -240,16 +240,6 @@
     <!-- MAIN VIEW 1: RICEVIMENTO MERCI -->
     <div id="view-ricevimento" class="space-y-4">
 
-      <!-- QUICK ACTION BUTTONS -->
-      <div class="grid grid-cols-2 gap-2.5">
-        <button onclick="resetForm()" class="touch-target bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold rounded-xl text-sm flex items-center justify-center gap-2 shadow-md shadow-emerald-500/10 active:scale-98 transition-all">
-          <i class="fa-solid fa-plus-circle text-base"></i> Nuovo Lotto
-        </button>
-        <button onclick="toggleRegistryView()" class="touch-target bg-cardBg border border-cardBorder text-slate-200 font-semibold rounded-xl text-sm flex items-center justify-center gap-2 active:scale-98 transition-all">
-          <i class="fa-solid fa-list-check text-emerald-400"></i> Registro (HACCP)
-        </button>
-      </div>
-
       <div class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start">
 
       <!-- MAIN RECEIVING FORM CARD -->
@@ -430,12 +420,15 @@
           <button type="submit" class="touch-target w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-sm rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20 active:scale-98 transition-all pt-1">
             <i class="fa-solid fa-floppy-disk text-base"></i> REGISTRA ACCETTAZIONE
           </button>
+          <button type="button" onclick="confirmResetForm()" class="w-full py-2 text-xs font-bold text-slate-400 hover:text-red-400 flex items-center justify-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-eraser"></i> Svuota modulo
+          </button>
 
         </form>
       </div>
 
       <!-- REGISTRY CARDS VIEW SECTION (sempre visibile su tablet) -->
-      <div id="registry-card-section" class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-3 hidden md:block md:sticky md:top-4">
+      <div id="registry-card-section" class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-3 md:sticky md:top-4">
         <div class="flex items-center justify-between gap-2 flex-wrap">
           <h2 class="text-sm font-extrabold text-slate-100 flex items-center gap-1.5">
             <i class="fa-solid fa-database text-emerald-400"></i> Registro
@@ -1557,6 +1550,13 @@
       }
     }
 
+    /* Svuota il modulo del ricevimento solo dopo conferma (si perde quanto scritto) */
+    function confirmResetForm() {
+      if (!confirm("Svuotare il modulo? I dati inseriti e non registrati andranno persi.")) return;
+      resetForm();
+      showToast("Modulo svuotato");
+    }
+
     function resetForm() {
       document.getElementById('haccp-form').reset();
       document.getElementById('data_ricevimento').value = todayLocal();
@@ -2061,7 +2061,6 @@
       // Modulo pulito per il lotto successivo (evita doppie registrazioni)
       resetForm();
       showToast(nonConforme ? "⚠ Registrata NON CONFORMITÀ" : "✓ Registrazione salvata sul tablet");
-      toggleRegistryView(true);
     }
 
     function updateMetrics() {
@@ -2070,16 +2069,6 @@
       document.getElementById('cnt-anomalie').innerText = active.filter(isNonConforme).length;
       const todayStr = todayLocal();
       document.getElementById('cnt-oggi').innerText = active.filter(d => d.data_ricevimento === todayStr).length;
-    }
-
-    function toggleRegistryView(forceShow = false) {
-      const regSection = document.getElementById('registry-card-section');
-      if (forceShow === true || regSection.classList.contains('hidden')) {
-        regSection.classList.remove('hidden');
-        if (window.innerWidth < 768) regSection.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        regSection.classList.add('hidden');
-      }
     }
 
     function renderRegistry() {
