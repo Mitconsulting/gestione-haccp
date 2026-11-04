@@ -447,10 +447,19 @@
         </div>
 
         <div class="flex gap-2 items-center">
-          <input type="text" id="search-input" placeholder="🔍 Cerca Prodotto, Fornitore o Lotto..." class="touch-target flex-1 bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" oninput="renderRegistry()">
+          <input type="text" id="search-input" placeholder="🔍 Cerca Prodotto, Fornitore o Lotto..." class="touch-target flex-1 min-w-0 bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400" oninput="renderRegistry()">
+          <button type="button" id="registry-filter-btn" onclick="openRegistryFilter()" title="Filtra il registro" class="touch-target relative w-11 flex-shrink-0 rounded-xl bg-inputBg border border-cardBorder text-slate-300 flex items-center justify-center active:scale-95">
+            <i class="fa-solid fa-filter"></i>
+            <span id="registry-filter-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-cardBg"></span>
+          </button>
           <label class="text-[10.5px] text-slate-400 flex items-center gap-1 whitespace-nowrap select-none">
             <input type="checkbox" id="show-annullati" onchange="renderRegistry()"> Annullati
           </label>
+        </div>
+
+        <div id="registry-filter-summary" class="hidden flex items-center justify-between gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 text-[11px] text-emerald-300">
+          <span id="registry-filter-text" class="min-w-0"></span>
+          <button type="button" onclick="clearRegistryFilter()" class="flex-shrink-0 font-bold text-emerald-400 px-1 active:scale-95"><i class="fa-solid fa-xmark"></i> Togli filtro</button>
         </div>
 
         <div id="registry-list" class="space-y-2.5 max-h-[500px] md:max-h-[calc(100vh-300px)] overflow-y-auto pr-1"></div>
@@ -699,6 +708,51 @@
       <button onclick="closeLotPicker()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
         <i class="fa-solid fa-check"></i> FATTO
       </button>
+    </div>
+  </div>
+
+  <!-- FILTRO DEL REGISTRO: PERIODO ED ESITO -->
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="filter-modal">
+    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-cardBorder pb-2">
+        <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-filter text-emerald-400"></i> Filtra registro
+        </h3>
+        <button onclick="closeRegistryFilter()" class="text-slate-400 text-lg px-1">&times;</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="space-y-1">
+          <label for="flt_dal" class="text-[11px] font-bold text-slate-400 uppercase">Dal</label>
+          <input type="date" id="flt_dal" onchange="updateFilterCount()" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+        </div>
+        <div class="space-y-1">
+          <label for="flt_al" class="text-[11px] font-bold text-slate-400 uppercase">Al</label>
+          <input type="date" id="flt_al" onchange="updateFilterCount()" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-1.5">
+        <button type="button" onclick="setFilterRange('oggi')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Oggi</button>
+        <button type="button" onclick="setFilterRange('mese')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Questo mese</button>
+        <button type="button" onclick="setFilterRange('mesePrec')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Mese scorso</button>
+        <button type="button" onclick="setFilterRange('tutto')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Sempre</button>
+      </div>
+      <div class="space-y-1">
+        <label class="text-[11px] font-bold text-slate-400 uppercase">Esito</label>
+        <div id="flt-esito" class="grid grid-cols-3 gap-1.5 p-1 bg-inputBg border border-cardBorder rounded-xl">
+          <button type="button" data-value="tutti" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400" onclick="setFilterEsito('tutti')">Tutti</button>
+          <button type="button" data-value="nc" class="pill-btn pill-danger py-2 text-xs font-bold rounded-lg text-slate-400" onclick="setFilterEsito('nc')"><i class="fa-solid fa-triangle-exclamation"></i> Non conformi</button>
+          <button type="button" data-value="conformi" class="pill-btn py-2 text-xs font-bold rounded-lg text-slate-400" onclick="setFilterEsito('conformi')">Conformi</button>
+        </div>
+      </div>
+      <p id="flt-count" class="text-[11px] text-slate-400"></p>
+      <div class="grid grid-cols-2 gap-2">
+        <button onclick="clearRegistryFilter(); closeRegistryFilter();" class="touch-target bg-inputBg border border-cardBorder text-slate-300 font-bold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-rotate-left"></i> AZZERA
+        </button>
+        <button onclick="applyRegistryFilter()" class="touch-target bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-check"></i> APPLICA
+        </button>
+      </div>
     </div>
   </div>
 
@@ -2071,13 +2125,106 @@
       document.getElementById('cnt-oggi').innerText = active.filter(d => d.data_ricevimento === todayStr).length;
     }
 
+    /* ===== FILTRO DEL REGISTRO ===== */
+    let registryFilter = { dal: '', al: '', esito: 'tutti' };
+    let filterEsitoDraft = 'tutti';
+
+    function matchesRegistryFilter(item, f = registryFilter) {
+      const d = String(item.data_ricevimento || '');
+      if (f.dal && d < f.dal) return false;
+      if (f.al && d > f.al) return false;
+      if (f.esito === 'nc' && !isNonConforme(item)) return false;
+      if (f.esito === 'conformi' && isNonConforme(item)) return false;
+      return true;
+    }
+
+    function isRegistryFilterActive() {
+      return !!(registryFilter.dal || registryFilter.al || registryFilter.esito !== 'tutti');
+    }
+
+    function setFilterEsito(val) {
+      filterEsitoDraft = val;
+      document.querySelectorAll('#flt-esito .pill-btn').forEach(b => b.classList.toggle('active', b.dataset.value === val));
+      updateFilterCount();
+    }
+
+    function setFilterRange(tipo) {
+      const [dal, al] = tipo === 'tutto' ? ['', ''] : computeRange(tipo);
+      document.getElementById('flt_dal').value = dal;
+      document.getElementById('flt_al').value = al;
+      updateFilterCount();
+    }
+
+    function readFilterDraft() {
+      return { dal: document.getElementById('flt_dal').value, al: document.getElementById('flt_al').value, esito: filterEsitoDraft };
+    }
+
+    function updateFilterCount() {
+      const f = readFilterDraft();
+      const el = document.getElementById('flt-count');
+      if (f.dal && f.al && f.dal > f.al) {
+        el.innerHTML = '<span class="text-red-400 font-bold">La data "Dal" è successiva alla data "Al".</span>';
+        return;
+      }
+      const showAnnullati = document.getElementById('show-annullati').checked;
+      const n = registryData.filter(r => (showAnnullati || isActive(r)) && matchesRegistryFilter(r, f)).length;
+      el.textContent = n === 1 ? '1 registrazione corrisponde.' : `${n} registrazioni corrispondono.`;
+    }
+
+    function openRegistryFilter() {
+      document.getElementById('flt_dal').value = registryFilter.dal;
+      document.getElementById('flt_al').value = registryFilter.al;
+      setFilterEsito(registryFilter.esito);
+      document.getElementById('filter-modal').classList.remove('hidden');
+    }
+
+    function closeRegistryFilter() {
+      document.getElementById('filter-modal').classList.add('hidden');
+    }
+
+    function applyRegistryFilter() {
+      const f = readFilterDraft();
+      if (f.dal && f.al && f.dal > f.al) {
+        showToast('Controlla il periodo: "Dal" è dopo "Al"');
+        return;
+      }
+      registryFilter = f;
+      closeRegistryFilter();
+      renderRegistry();
+    }
+
+    function clearRegistryFilter() {
+      registryFilter = { dal: '', al: '', esito: 'tutti' };
+      renderRegistry();
+    }
+
+    function updateRegistryFilterUi() {
+      const active = isRegistryFilterActive();
+      const btn = document.getElementById('registry-filter-btn');
+      btn.classList.toggle('text-emerald-400', active);
+      btn.classList.toggle('border-emerald-500/50', active);
+      document.getElementById('registry-filter-dot').classList.toggle('hidden', !active);
+      document.getElementById('registry-filter-summary').classList.toggle('hidden', !active);
+      if (!active) return;
+      const parti = [];
+      const { dal, al, esito } = registryFilter;
+      if (dal && al) parti.push(`dal ${formatDate(dal)} al ${formatDate(al)}`);
+      else if (dal) parti.push(`dal ${formatDate(dal)}`);
+      else if (al) parti.push(`fino al ${formatDate(al)}`);
+      if (esito === 'nc') parti.push('solo NON conformi');
+      if (esito === 'conformi') parti.push('solo conformi');
+      document.getElementById('registry-filter-text').innerHTML = `<i class="fa-solid fa-filter"></i> Filtro: ${escapeHtml(parti.join(' · '))}`;
+    }
+
     function renderRegistry() {
       const listContainer = document.getElementById('registry-list');
       const searchQuery = document.getElementById('search-input').value.toLowerCase();
       const showAnnullati = document.getElementById('show-annullati').checked;
 
+      updateRegistryFilterUi();
       const filtered = registryData.filter(item => {
         if (!showAnnullati && !isActive(item)) return false;
+        if (!matchesRegistryFilter(item)) return false;
         return [item.nome_prodotto, item.fornitore, item.lotto, item.note]
           .some(v => v && String(v).toLowerCase().includes(searchQuery));
       });
@@ -2512,7 +2659,7 @@
       return `_dal_${dal || date[0]}_al_${al || date[date.length - 1]}`;
     }
 
-    function setPdfRange(tipo) {
+    function computeRange(tipo) {
       const oggi = todayLocal();
       const [y, m] = oggi.split('-').map(Number);
       const iso = (yy, mm, dd) => `${yy}-${pad2(mm)}-${pad2(dd)}`;
@@ -2528,6 +2675,11 @@
         dal = date[0] || oggi;
         al = date[date.length - 1] || oggi;
       }
+      return [dal, al];
+    }
+
+    function setPdfRange(tipo) {
+      const [dal, al] = computeRange(tipo);
       document.getElementById('pdf_dal').value = dal;
       document.getElementById('pdf_al').value = al;
       updatePdfCount();
