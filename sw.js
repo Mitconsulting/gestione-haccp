@@ -1,6 +1,6 @@
 /* Service worker: rende l'app utilizzabile offline sul tablet.
    I DATI del registro non passano di qui: stanno in IndexedDB. */
-const CACHE = 'gestione-haccp-v1.2.5';
+const CACHE = 'gestione-haccp-v1.2.6';
 
 const APP_FILES = [
   './',
@@ -8,7 +8,9 @@ const APP_FILES = [
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
-  './icons/icon-maskable-512.png'
+  './icons/icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
+  './icons/logo-96.png'
 ];
 
 // Librerie esterne: messe in cache subito, se la rete c'è

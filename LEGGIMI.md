@@ -24,7 +24,7 @@ Al primo avvio l'app chiede il **nome dell'attività**, mostrato in intestazione
 Il nome sotto l'icona del tablet è "Gestione HACCP"; con Chrome su Android si può cambiare al momento dell'installazione.
 
 ## Aggiornare l'app
-Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.6`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
+Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.7`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
 
 ## Novità rispetto alla v1.1
 - Archivio IndexedDB al posto di localStorage, archiviazione persistente e stato dell'archivio nelle Impostazioni.
@@ -44,3 +44,4 @@ Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `
 - Ripristino del backup con conferma; "Svuota registro" richiede di scrivere SVUOTA e scarica prima un backup.
 - Etichette: i campi "Codice lotto" e "Nome materia prima" propongono solo i lotti e i prodotti registrati nel Ricevimento (scegliendo il prodotto si compila il lotto più recente e viceversa); pulsante "Scegli dai lotti ricevuti" con elenco a tocco, avvisi per lotti scaduti o non conformi.
 - Fornitori, prodotti e ricette modificabili (Impostazioni → Fornitori, prodotti e ricette, oppure "Gestisci" accanto ai campi di Ricevimento ed Etichette): aggiungi, modifica, elimina. Le registrazioni già salvate non cambiano. Dopo una registrazione con un fornitore, prodotto o ricetta nuovi, l'app propone di aggiungerlo all'elenco. L'anagrafica è inclusa nel backup.
+- Nuovo logo (scudo con cappello da chef e spunta) per icona del tablet, intestazione e schermata di primo avvio.
