@@ -24,7 +24,7 @@ Al primo avvio l'app chiede il **nome dell'attività**, mostrato in intestazione
 Il nome sotto l'icona del tablet è "Gestione HACCP"; con Chrome su Android si può cambiare al momento dell'installazione.
 
 ## Aggiornare l'app
-Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.12`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
+Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.13`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
 
 ## Novità rispetto alla v1.1
 - Archivio IndexedDB al posto di localStorage, archiviazione persistente e stato dell'archivio nelle Impostazioni.
@@ -39,7 +39,7 @@ Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `
 - Dopo la registrazione il modulo si svuota. Avviso se si registra due volte lo stesso lotto.
 - Bozza salvata anche per le etichette (materie prime e allergeni).
 - QR più compatto e leggibile; stampa etichetta a 58 o 80 mm, scheda audit su A4.
-- Export PDF del registro (A4 orizzontale, non conformi evidenziati, annullati barrati, spazio firma); Excel con colonne Stato ed Esito, righe NC evidenziate.
+- Export PDF del registro per periodo Dal/Al (scorciatoie Oggi, Questo mese, Mese scorso, Tutto; A4 orizzontale, non conformi evidenziati, annullati barrati, spazio firma); Excel con colonne Stato ed Esito, righe NC evidenziate.
 - OCR migliorato: riconosce lotto, prodotto e scadenza.
 - Ripristino del backup con conferma; "Svuota registro" richiede di scrivere SVUOTA e scarica prima un backup.
 - Etichette: i campi "Codice lotto" e "Nome materia prima" propongono solo i lotti e i prodotti registrati nel Ricevimento (scegliendo il prodotto si compila il lotto più recente e viceversa); pulsante "Scegli dai lotti ricevuti" con elenco a tocco, avvisi per lotti scaduti o non conformi.

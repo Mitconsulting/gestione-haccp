@@ -444,7 +444,7 @@
             <button onclick="shareFullRegistryEmail()" class="px-2 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold active:scale-95">
               <i class="fa-solid fa-envelope"></i> Email
             </button>
-            <button onclick="exportPDF()" class="px-2.5 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
+            <button onclick="openPdfModal()" class="px-2.5 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
               <i class="fa-solid fa-file-pdf"></i> PDF
             </button>
             <button onclick="exportExcel()" class="px-2.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
@@ -702,6 +702,38 @@
       <div id="lot-picker-list" class="space-y-1.5 overflow-y-auto flex-1 pr-1"></div>
       <button onclick="closeLotPicker()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
         <i class="fa-solid fa-check"></i> FATTO
+      </button>
+    </div>
+  </div>
+
+  <!-- STAMPA REGISTRO IN PDF: PERIODO DAL / AL -->
+  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="pdf-modal">
+    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-cardBorder pb-2">
+        <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-file-pdf text-red-400"></i> Stampa registro in PDF
+        </h3>
+        <button onclick="closePdfModal()" class="text-slate-400 text-lg px-1">&times;</button>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="space-y-1">
+          <label for="pdf_dal" class="text-[11px] font-bold text-slate-400 uppercase">Dal</label>
+          <input type="date" id="pdf_dal" onchange="updatePdfCount()" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+        </div>
+        <div class="space-y-1">
+          <label for="pdf_al" class="text-[11px] font-bold text-slate-400 uppercase">Al</label>
+          <input type="date" id="pdf_al" onchange="updatePdfCount()" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+        </div>
+      </div>
+      <div class="grid grid-cols-4 gap-1.5">
+        <button type="button" onclick="setPdfRange('oggi')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Oggi</button>
+        <button type="button" onclick="setPdfRange('mese')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Questo mese</button>
+        <button type="button" onclick="setPdfRange('mesePrec')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Mese scorso</button>
+        <button type="button" onclick="setPdfRange('tutto')" class="py-2 text-[11px] font-bold rounded-lg bg-inputBg border border-cardBorder text-slate-300 active:scale-95">Tutto</button>
+      </div>
+      <p id="pdf-count" class="text-[11px] text-slate-400"></p>
+      <button onclick="generatePdfFromModal()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
+        <i class="fa-solid fa-file-arrow-down"></i> GENERA PDF
       </button>
     </div>
   </div>
@@ -2466,25 +2498,94 @@
 
     /* Registro in PDF (A4 orizzontale), pronto da stampare o consegnare all'ASL.
        Include anche i record annullati (barrati, con il motivo): il registro non si cancella. */
-    function exportPDF() {
+    /* Periodo della stampa: si filtra sulla data di ricevimento / produzione */
+    function pdfRecordsInRange(dal, al) {
+      return registryData.filter(r => {
+        const d = String(r.data_ricevimento || '');
+        return (!dal || d >= dal) && (!al || d <= al);
+      });
+    }
+
+    function setPdfRange(tipo) {
+      const oggi = todayLocal();
+      const [y, m] = oggi.split('-').map(Number);
+      const iso = (yy, mm, dd) => `${yy}-${pad2(mm)}-${pad2(dd)}`;
+      let dal = oggi, al = oggi;
+      if (tipo === 'mese') {
+        dal = iso(y, m, 1);
+      } else if (tipo === 'mesePrec') {
+        const py = m === 1 ? y - 1 : y, pm = m === 1 ? 12 : m - 1;
+        dal = iso(py, pm, 1);
+        al = iso(py, pm, new Date(py, pm, 0).getDate());
+      } else if (tipo === 'tutto') {
+        const date = registryData.map(r => r.data_ricevimento).filter(Boolean).sort();
+        dal = date[0] || oggi;
+        al = date[date.length - 1] || oggi;
+      }
+      document.getElementById('pdf_dal').value = dal;
+      document.getElementById('pdf_al').value = al;
+      updatePdfCount();
+    }
+
+    function updatePdfCount() {
+      const dal = document.getElementById('pdf_dal').value;
+      const al = document.getElementById('pdf_al').value;
+      const el = document.getElementById('pdf-count');
+      if (dal && al && dal > al) {
+        el.innerHTML = '<span class="text-red-400 font-bold">La data "Dal" è successiva alla data "Al".</span>';
+        return;
+      }
+      const n = pdfRecordsInRange(dal, al).length;
+      el.textContent = n === 1 ? '1 registrazione nel periodo.' : `${n} registrazioni nel periodo (annullate comprese).`;
+    }
+
+    function openPdfModal() {
       if (registryData.length === 0) {
         showToast("Nessun dato da esportare.");
         return;
       }
+      setPdfRange('mese');
+      document.getElementById('pdf-modal').classList.remove('hidden');
+    }
+
+    function closePdfModal() {
+      document.getElementById('pdf-modal').classList.add('hidden');
+    }
+
+    function generatePdfFromModal() {
+      const dal = document.getElementById('pdf_dal').value;
+      const al = document.getElementById('pdf_al').value;
+      if (dal && al && dal > al) {
+        showToast('Controlla il periodo: "Dal" è dopo "Al"');
+        return;
+      }
+      if (pdfRecordsInRange(dal, al).length === 0) {
+        showToast("Nessuna registrazione nel periodo scelto.");
+        return;
+      }
+      if (exportPDF(dal, al)) closePdfModal();
+    }
+
+    function exportPDF(dal = '', al = '') {
+      const selezione = pdfRecordsInRange(dal, al);
+      if (selezione.length === 0) {
+        showToast("Nessun dato da esportare.");
+        return false;
+      }
       if (!window.jspdf || !window.jspdf.jsPDF) {
         showToast("Modulo PDF non disponibile: apri l'app una volta con la rete attiva.");
-        return;
+        return false;
       }
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       if (typeof doc.autoTable !== 'function') {
         showToast("Modulo tabelle PDF non disponibile: apri l'app una volta con la rete attiva.");
-        return;
+        return false;
       }
 
       const val = v => (v === null || v === undefined || v === '') ? '-' : String(v);
-      const records = [...registryData].sort((a, b) =>
+      const records = [...selezione].sort((a, b) =>
         String(a.data_ricevimento || '').localeCompare(String(b.data_ricevimento || '')) ||
         String(a.created_at || '').localeCompare(String(b.created_at || '')));
 
@@ -2492,7 +2593,7 @@
       const nonConformi = attivi.filter(isNonConforme).length;
       const annullati = records.length - attivi.length;
       const date = records.map(r => r.data_ricevimento).filter(Boolean);
-      const periodo = date.length ? `${formatDate(date[0])} - ${formatDate(date[date.length - 1])}` : '-';
+      const periodo = `${formatDate(dal || date[0])} - ${formatDate(al || date[date.length - 1])}`;
 
       const body = records.map(r => {
         let note = val(r.note);
@@ -2600,8 +2701,10 @@
         doc.text(`Pagina ${i} di ${tot}`, pageW - 10, pageH - 6, { align: 'right' });
       }
 
-      downloadBlob(doc.output('blob'), exportFileBase() + '.pdf');
+      const suffisso = dal || al ? `_dal_${dal || date[0]}_al_${al || date[date.length - 1]}` : '';
+      downloadBlob(doc.output('blob'), exportFileBase() + suffisso + '.pdf');
       showToast("PDF scaricato!");
+      return true;
     }
 
     function exportExcel() {
