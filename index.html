@@ -44,9 +44,11 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- External Libraries: Tesseract OCR, QRCode.js -->
+  <!-- External Libraries: Tesseract OCR, QRCode.js, jsPDF (export PDF del registro) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
   <style>
     :root {
@@ -442,8 +444,8 @@
             <button onclick="shareFullRegistryEmail()" class="px-2 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold active:scale-95">
               <i class="fa-solid fa-envelope"></i> Email
             </button>
-            <button onclick="exportCSV()" class="px-2 py-1.5 bg-slate-700 text-slate-200 border border-slate-600 rounded-lg text-xs font-bold active:scale-95">
-              CSV
+            <button onclick="exportPDF()" class="px-2.5 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
+              <i class="fa-solid fa-file-pdf"></i> PDF
             </button>
             <button onclick="exportExcel()" class="px-2.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
               <i class="fa-solid fa-file-excel"></i> Excel (.xls)
@@ -2462,21 +2464,144 @@
       setTimeout(() => URL.revokeObjectURL(url), 2000);
     }
 
-    function exportCSV() {
+    /* Registro in PDF (A4 orizzontale), pronto da stampare o consegnare all'ASL.
+       Include anche i record annullati (barrati, con il motivo): il registro non si cancella. */
+    function exportPDF() {
       if (registryData.length === 0) {
         showToast("Nessun dato da esportare.");
         return;
       }
+      if (!window.jspdf || !window.jspdf.jsPDF) {
+        showToast("Modulo PDF non disponibile: apri l'app una volta con la rete attiva.");
+        return;
+      }
 
-      const csvCell = v => `"${v.replace(/"/g, '""')}"`;
-      let csv = EXPORT_HEADERS.map(csvCell).join(';') + '\r\n';
-      registryData.forEach(r => {
-        csv += exportRow(r).map(csvCell).join(';') + '\r\n';
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+      if (typeof doc.autoTable !== 'function') {
+        showToast("Modulo tabelle PDF non disponibile: apri l'app una volta con la rete attiva.");
+        return;
+      }
+
+      const val = v => (v === null || v === undefined || v === '') ? '-' : String(v);
+      const records = [...registryData].sort((a, b) =>
+        String(a.data_ricevimento || '').localeCompare(String(b.data_ricevimento || '')) ||
+        String(a.created_at || '').localeCompare(String(b.created_at || '')));
+
+      const attivi = records.filter(isActive);
+      const nonConformi = attivi.filter(isNonConforme).length;
+      const annullati = records.length - attivi.length;
+      const date = records.map(r => r.data_ricevimento).filter(Boolean);
+      const periodo = date.length ? `${formatDate(date[0])} - ${formatDate(date[date.length - 1])}` : '-';
+
+      const body = records.map(r => {
+        let note = val(r.note);
+        if (!isActive(r)) note = `ANNULLATO: ${val(r.annullato_motivo)}` + (r.note ? `\n${r.note}` : '');
+        return [
+          formatDate(r.data_ricevimento),
+          val(r.fornitore),
+          val(r.nome_prodotto),
+          val(r.lotto),
+          val(r.quantita),
+          formatDate(r.scadenza),
+          val(r.tipo_prodotto),
+          [r.temp_check, r.temp_esito].filter(Boolean).join(' - ') || '-',
+          val(r.integrita),
+          isNonConforme(r) ? 'NON CONFORME' : 'Conforme',
+          val(r.operatore),
+          note
+        ];
       });
 
-      // BOM UTF-8: Excel legge correttamente le lettere accentate
-      downloadBlob(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), exportFileBase() + '.csv');
-      showToast("CSV scaricato!");
+      const pageW = doc.internal.pageSize.getWidth();
+      const pageH = doc.internal.pageSize.getHeight();
+      const generato = formatDateTime(new Date().toISOString());
+      const azienda = companyConfig.companyName || 'Registro HACCP';
+
+      doc.autoTable({
+        head: [['Data', 'Fornitore', 'Prodotto', 'Lotto', 'Q.tà', 'Scadenza', 'Tipologia', 'Temperatura', 'Imballo', 'Esito', 'Operatore', 'Note / Azioni correttive']],
+        body,
+        startY: 30,
+        margin: { top: 24, left: 10, right: 10, bottom: 14 },
+        theme: 'grid',
+        rowPageBreak: 'avoid',
+        styles: { font: 'helvetica', fontSize: 7, cellPadding: 1.4, overflow: 'linebreak', valign: 'middle', lineColor: [200, 205, 210], lineWidth: 0.1 },
+        headStyles: { fillColor: [16, 185, 129], textColor: 255, fontStyle: 'bold', halign: 'center' },
+        alternateRowStyles: { fillColor: [246, 248, 250] },
+        columnStyles: {
+          0: { cellWidth: 17 }, 1: { cellWidth: 28 }, 2: { cellWidth: 34 }, 3: { cellWidth: 24 },
+          4: { cellWidth: 14 }, 5: { cellWidth: 17 }, 6: { cellWidth: 22 }, 7: { cellWidth: 24 },
+          8: { cellWidth: 15 }, 9: { cellWidth: 19, halign: 'center', fontStyle: 'bold' },
+          10: { cellWidth: 20 }, 11: { cellWidth: 'auto' }
+        },
+        didParseCell: data => {
+          const r = data.section === 'body' && records[data.row.index];
+          if (!r) return;
+          if (!isActive(r)) {
+            data.cell.styles.textColor = [140, 140, 140];
+            data.cell.styles.fontStyle = 'italic';
+            data.cell.styles.fillColor = [238, 238, 238];
+          } else if (isNonConforme(r)) {
+            data.cell.styles.fillColor = [253, 226, 226];
+            if (data.column.index === 9) data.cell.styles.textColor = [185, 28, 28];
+          } else if (data.column.index === 9) {
+            data.cell.styles.textColor = [4, 120, 87];
+          }
+        },
+        didDrawCell: data => {
+          // Barra le righe annullate (tranne la colonna note, che riporta il motivo)
+          const r = data.section === 'body' && data.column.index !== 11 && records[data.row.index];
+          if (!r || isActive(r)) return;
+          const y = data.cell.y + data.cell.height / 2;
+          doc.setDrawColor(150, 150, 150);
+          doc.setLineWidth(0.2);
+          doc.line(data.cell.x + 1, y, data.cell.x + data.cell.width - 1, y);
+        },
+        didDrawPage: () => {
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(13);
+          doc.setTextColor(20, 20, 20);
+          doc.text(azienda.toUpperCase(), 10, 12);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(9);
+          doc.setTextColor(80, 80, 80);
+          doc.text('Registro ricevimento merci e rintracciabilità (Reg. CE 178/2002 - 852/2004)', 10, 17.5);
+          doc.text(`Generato il ${generato}`, pageW - 10, 12, { align: 'right' });
+          doc.setDrawColor(16, 185, 129);
+          doc.setLineWidth(0.5);
+          doc.line(10, 20.5, pageW - 10, 20.5);
+        }
+      });
+
+      // Riepilogo sotto l'intestazione della prima pagina
+      doc.setPage(1);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(50, 50, 50);
+      doc.text(`Periodo: ${periodo}   |   Registrazioni attive: ${attivi.length}   |   Non conformi: ${nonConformi}   |   Annullate: ${annullati}`, 10, 26);
+
+      // Firma del responsabile in fondo al registro
+      doc.setPage(doc.getNumberOfPages());
+      let y = (doc.lastAutoTable.finalY || 30) + 14;
+      if (y > pageH - 22) { doc.addPage(); y = 34; }
+      doc.setFontSize(9);
+      doc.setTextColor(40, 40, 40);
+      doc.text('Data verifica: ____________________', 10, y);
+      doc.text('Firma del responsabile HACCP: ________________________________', pageW - 10, y, { align: 'right' });
+
+      // Piè di pagina con numerazione (anche sull'eventuale pagina della firma)
+      const tot = doc.getNumberOfPages();
+      for (let i = 1; i <= tot; i++) {
+        doc.setPage(i);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(7.5);
+        doc.setTextColor(120, 120, 120);
+        doc.text(azienda, 10, pageH - 6);
+        doc.text(`Pagina ${i} di ${tot}`, pageW - 10, pageH - 6, { align: 'right' });
+      }
+
+      downloadBlob(doc.output('blob'), exportFileBase() + '.pdf');
+      showToast("PDF scaricato!");
     }
 
     function exportExcel() {
