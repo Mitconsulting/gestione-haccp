@@ -9,7 +9,17 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
-  <meta name="theme-color" content="#0f1420">
+  <meta name="theme-color" content="#f4f6f3">
+  <script>
+    /* Tema scelto su questo dispositivo, applicato prima del disegno della pagina (niente lampo) */
+    (function () {
+      var t = 'chiaro';
+      try { t = localStorage.getItem('gestione_haccp_tema') || 'chiaro'; } catch (e) {}
+      var scuro = t === 'scuro' || (t === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = scuro ? 'dark' : 'light';
+      document.documentElement.dataset.themePref = t;
+    })();
+  </script>
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -22,11 +32,17 @@
       theme: {
         extend: {
           colors: {
-            appBg: '#0f1420',
-            cardBg: '#172033',
-            cardBorder: '#233047',
-            inputBg: '#1d293d',
-            inputFocus: '#24344d',
+            appBg: 'rgb(var(--c-app) / <alpha-value>)',
+            cardBg: 'rgb(var(--c-card) / <alpha-value>)',
+            cardBorder: 'rgb(var(--c-line) / <alpha-value>)',
+            inputBg: 'rgb(var(--c-input) / <alpha-value>)',
+            inputFocus: 'rgb(var(--c-inputfocus) / <alpha-value>)',
+            slate: { 100: 'rgb(var(--c-slate-100) / <alpha-value>)', 200: 'rgb(var(--c-slate-200) / <alpha-value>)', 300: 'rgb(var(--c-slate-300) / <alpha-value>)', 400: 'rgb(var(--c-slate-400) / <alpha-value>)', 500: 'rgb(var(--c-slate-500) / <alpha-value>)', 600: 'rgb(var(--c-slate-600) / <alpha-value>)', 700: 'rgb(var(--c-slate-700) / <alpha-value>)', 950: 'rgb(var(--c-slate-950) / <alpha-value>)' },
+            emerald: { 300: 'rgb(var(--c-emerald-300) / <alpha-value>)', 400: 'rgb(var(--c-emerald-400) / <alpha-value>)', 500: 'rgb(var(--c-emerald-500) / <alpha-value>)', 950: 'rgb(var(--c-emerald-950) / <alpha-value>)' },
+            rose: { 300: 'rgb(var(--c-rose-300) / <alpha-value>)', 400: 'rgb(var(--c-rose-400) / <alpha-value>)', 500: 'rgb(var(--c-rose-500) / <alpha-value>)', 600: 'rgb(var(--c-rose-600) / <alpha-value>)' },
+            red: { 400: 'rgb(var(--c-red-400) / <alpha-value>)', 500: 'rgb(var(--c-red-500) / <alpha-value>)' },
+            amber: { 300: 'rgb(var(--c-amber-300) / <alpha-value>)', 400: 'rgb(var(--c-amber-400) / <alpha-value>)', 500: 'rgb(var(--c-amber-500) / <alpha-value>)' },
+            blue: { 300: 'rgb(var(--c-blue-300) / <alpha-value>)', 400: 'rgb(var(--c-blue-400) / <alpha-value>)', 500: 'rgb(var(--c-blue-500) / <alpha-value>)' },
             sageEmerald: '#34d399',
             sageEmeraldHover: '#10b981',
             accentBlue: '#60a5fa',
@@ -42,7 +58,7 @@
 
   <!-- FontAwesome & Google Fonts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
   <!-- External Libraries: Tesseract OCR, QRCode.js, jsPDF (export PDF del registro) -->
   <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js"></script>
@@ -52,8 +68,17 @@
 
   <style>
     :root {
-      --font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-family: 'Manrope', system-ui, -apple-system, sans-serif;
+      --nav-w: 92px;
+      --c-app: 244 246 243; --c-card: 255 255 255; --c-line: 227 232 225; --c-input: 248 250 247; --c-inputfocus: 255 255 255; --c-slate-100: 23 33 27; --c-slate-200: 40 52 45; --c-slate-300: 66 79 71; --c-slate-400: 96 110 101; --c-slate-500: 128 140 132; --c-slate-600: 176 186 179; --c-slate-700: 208 215 210; --c-slate-950: 255 255 255; --c-emerald-300: 21 94 58; --c-emerald-400: 28 112 70; --c-emerald-500: 31 122 77; --c-emerald-950: 220 240 229; --c-rose-300: 150 22 48; --c-rose-400: 186 28 56; --c-rose-500: 214 40 66; --c-rose-600: 186 28 56; --c-red-400: 192 57 43; --c-red-500: 192 57 43; --c-amber-300: 133 77 14; --c-amber-400: 161 98 7; --c-amber-500: 205 130 20; --c-blue-300: 30 64 140; --c-blue-400: 37 92 160; --c-blue-500: 37 99 168;
+      --shadow: 0 1px 2px rgba(20, 40, 30, .06), 0 4px 14px rgba(20, 40, 30, .05);
     }
+    :root[data-theme="dark"] {
+      --c-app: 15 21 18; --c-card: 22 30 25; --c-line: 38 51 43; --c-input: 27 37 32; --c-inputfocus: 32 44 38; --c-slate-100: 232 239 233; --c-slate-200: 214 223 216; --c-slate-300: 190 202 194; --c-slate-400: 147 163 152; --c-slate-500: 110 125 115; --c-slate-600: 71 85 77; --c-slate-700: 51 64 56; --c-slate-950: 6 14 10; --c-emerald-300: 134 224 175; --c-emerald-400: 69 185 124; --c-emerald-500: 52 168 108; --c-emerald-950: 10 40 26; --c-rose-300: 253 164 175; --c-rose-400: 251 113 133; --c-rose-500: 244 63 94; --c-rose-600: 225 29 72; --c-red-400: 248 113 113; --c-red-500: 239 68 68; --c-amber-300: 252 211 77; --c-amber-400: 251 191 36; --c-amber-500: 245 158 11; --c-blue-300: 147 197 253; --c-blue-400: 96 165 250; --c-blue-500: 59 130 246;
+      --shadow: none;
+    }
+    /* Aree che restano sempre "carta bianca" (anteprima etichetta, scheda audit): colori originali */
+    .paper { --c-slate-100: 241 245 249; --c-slate-200: 226 232 240; --c-slate-300: 203 213 225; --c-slate-400: 148 163 184; --c-slate-500: 100 116 139; --c-slate-600: 71 85 105; --c-slate-700: 51 65 85; --c-slate-950: 2 6 23; --c-emerald-300: 110 231 183; --c-emerald-400: 52 211 153; --c-emerald-500: 16 185 129; --c-emerald-950: 2 44 34; --c-rose-300: 253 164 175; --c-rose-400: 251 113 133; --c-rose-500: 244 63 94; --c-rose-600: 225 29 72; --c-red-400: 248 113 113; --c-red-500: 239 68 68; --c-amber-300: 252 211 77; --c-amber-400: 251 191 36; --c-amber-500: 245 158 11; --c-blue-300: 147 197 253; --c-blue-400: 96 165 250; --c-blue-500: 59 130 246; }
 
     * {
       box-sizing: border-box;
@@ -64,30 +89,90 @@
     }
 
     body {
-      background-color: #0f1420;
-      color: #f1f5f9;
+      background-color: rgb(var(--c-app));
+      color: rgb(var(--c-slate-100));
       min-height: 100vh;
-      padding-bottom: 90px;
+      padding-bottom: 96px;
+      font-size: 15px;
     }
 
     .touch-target {
-      min-height: 48px;
+      min-height: 52px;
     }
 
+    /* Ombre morbide delle schede (solo nel tema chiaro) */
+    .shadow-lg, .shadow-sm, .shadow-md { box-shadow: var(--shadow) !important; }
+
     /* Pulsanti a scelta singola: lo stato selezionato dipende solo dalla classe .active */
+    .pill-btn { min-height: 44px; }
     .pill-btn.active {
-      background-color: #10b981;
-      color: #020617;
+      background-color: rgb(var(--c-emerald-500));
+      color: #ffffff;
     }
     .pill-btn.pill-danger.active {
-      background-color: #f43f5e;
+      background-color: rgb(var(--c-rose-500));
       color: #ffffff;
     }
 
+    /* ===== NAVIGAZIONE: barra in basso su telefono, barra laterale su tablet ===== */
+    .app-nav {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+      display: flex; justify-content: space-around; gap: 2px;
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+      background: rgb(var(--c-card) / .97); border-top: 1px solid rgb(var(--c-line));
+      backdrop-filter: blur(8px);
+    }
+    .app-nav .nav-logo, .app-nav .nav-spacer { display: none; }
+    .nav-btn {
+      flex: 1; border: 0; background: none; border-radius: 14px; padding: 8px 2px;
+      display: flex; flex-direction: column; align-items: center; gap: 5px;
+      font-size: 10.5px; font-weight: 700; color: rgb(var(--c-slate-400)); line-height: 1.1; text-align: center;
+    }
+    .nav-btn i { font-size: 19px; }
+    .nav-btn.on { background: rgb(var(--c-emerald-500) / .12); color: rgb(var(--c-emerald-400)); }
+    @media (min-width: 768px) {
+      body { padding-bottom: 0; padding-left: var(--nav-w); }
+      .app-nav {
+        top: 0; right: auto; width: var(--nav-w); flex-direction: column; justify-content: flex-start; align-items: center;
+        padding: 16px 0; gap: 6px; border-top: 0; border-right: 1px solid rgb(var(--c-line));
+      }
+      .app-nav .nav-logo { display: block; width: 52px; height: 52px; border-radius: 14px; margin-bottom: 14px; background: #fff; padding: 3px; }
+      .app-nav .nav-spacer { display: block; flex: 1; }
+      .nav-btn { flex: none; width: 78px; padding: 10px 0; font-size: 11.5px; }
+      .nav-btn i { font-size: 20px; }
+    }
+
+    /* ===== VISTE ===== */
+    /* Telefono: il registro ha la sua sezione; tablet: affiancato al modulo */
+    @media (max-width: 767px) {
+      body[data-view="ricevimento"] #registry-card-section { display: none; }
+    }
+    body[data-view="registro"] #receiving-form-card { display: none; }
+    body[data-view="registro"] #ricevimento-grid { display: block; }
+    body[data-view="registro"] #registry-card-section { position: static; }
+    body[data-view="registro"] #registry-list { max-height: none; }
+
+    /* Passi del ricevimento */
+    .step-chip { font-size: 11px; font-weight: 800; padding: 5px 10px; border-radius: 999px; border: 1px solid rgb(var(--c-line)); background: rgb(var(--c-input)); color: rgb(var(--c-slate-400)); white-space: nowrap; }
+    .step-chip.on { background: rgb(var(--c-emerald-500)); border-color: rgb(var(--c-emerald-500)); color: #fff; }
+    .step-chip.done { background: rgb(var(--c-emerald-500) / .14); border-color: transparent; color: rgb(var(--c-emerald-400)); }
+
+    /* Scala della temperatura: verde fino al limite, rosso oltre */
+    .temp-scale { position: relative; height: 12px; border-radius: 99px; }
+    .temp-scale .mark { position: absolute; top: -7px; width: 4px; height: 26px; margin-left: -2px; border-radius: 4px; background: rgb(var(--c-slate-100)); transition: left .2s; }
+
+    /* Filtri rapidi del registro */
+    .fchip { padding: 7px 12px; border-radius: 999px; font-size: 12px; font-weight: 800; border: 1px solid rgb(var(--c-line)); background: rgb(var(--c-card)); color: rgb(var(--c-slate-400)); }
+    .fchip.on { background: rgb(var(--c-slate-100)); border-color: rgb(var(--c-slate-100)); color: rgb(var(--c-card)); }
+    .fchip.fchip-bad.on { background: rgb(var(--c-rose-500)); border-color: rgb(var(--c-rose-500)); color: #fff; }
+
+    .kpi-tile { display: flex; align-items: center; gap: 12px; text-align: left; }
+    .kpi-ico { width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center; font-size: 17px; flex-shrink: 0; }
+
     .allergen-tag.on {
-      background-color: rgba(244, 63, 94, 0.2);
-      border-color: #f43f5e;
-      color: #fda4af;
+      background-color: rgb(var(--c-rose-500) / .18);
+      border-color: rgb(var(--c-rose-500));
+      color: rgb(var(--c-rose-400));
       font-weight: 700;
     }
 
@@ -108,6 +193,9 @@
       -ms-overflow-style: none;
       scrollbar-width: none;
     }
+
+    .modal-overlay { background: rgb(15 25 20 / .45); }
+    :root[data-theme="dark"] .modal-overlay { background: rgb(0 0 0 / .8); }
 
     .record-annullato .record-title {
       text-decoration: line-through;
@@ -147,7 +235,7 @@
   </style>
   <style id="page-style"></style>
 </head>
-<body class="antialiased selection:bg-teal-500 selection:text-black">
+<body class="antialiased selection:bg-teal-500 selection:text-black" data-view="ricevimento">
 
   <!-- DATALIST FORNITORI (dall'anagrafica salvata sul tablet) -->
   <datalist id="fornitori-list"></datalist>
@@ -171,25 +259,25 @@
   <!-- DATALIST DINAMICA MATERIE PRIME RICEVUTE -->
   <datalist id="mp-ricevute-list"></datalist>
 
-  <div class="max-w-md md:max-w-6xl mx-auto px-4 pt-4 pb-12">
+  <div class="max-w-md md:max-w-7xl mx-auto px-4 md:px-6 pt-4 md:pt-5 pb-12">
 
     <!-- TOP APP HEADER -->
-    <header class="flex items-center justify-between bg-cardBg border border-cardBorder rounded-2xl p-3 mb-3 shadow-sm">
-      <div class="flex items-center gap-3">
-        <img src="icons/logo-96.png" alt="Gestione HACCP" class="w-10 h-10 rounded-xl bg-white p-0.5 shadow-inner flex-shrink-0">
-        <div>
-          <h1 id="header-company-title" class="text-base font-extrabold text-slate-100 tracking-tight leading-none">Gestione HACCP</h1>
-          <div class="flex items-center gap-1.5 mt-1">
-            <p class="text-[10px] font-semibold text-emerald-400/90 tracking-wider uppercase">Registro HACCP OSA v1.2</p>
-            <span id="autosave-status-badge" class="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded text-[8.5px] font-bold flex items-center gap-1">
-              <i class="fa-solid fa-floppy-disk text-[8px]"></i> Auto-salvato
-            </span>
-          </div>
+    <header class="flex items-center gap-3 mb-4">
+      <img src="icons/logo-96.png" alt="Gestione HACCP" class="md:hidden w-11 h-11 rounded-xl bg-white p-0.5 shadow-sm flex-shrink-0">
+      <div class="min-w-0">
+        <h1 id="header-company-title" class="text-lg md:text-2xl font-extrabold text-slate-100 tracking-tight leading-tight truncate">Gestione HACCP</h1>
+        <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+          <p id="header-date" class="text-xs md:text-[13px] font-semibold text-slate-400">Registro HACCP</p>
+          <span id="autosave-status-badge" class="px-1.5 py-0.5 bg-emerald-500/15 text-emerald-400 rounded-full text-[10px] font-bold flex items-center gap-1">
+            <i class="fa-solid fa-floppy-disk text-[9px]"></i> Auto-salvato
+          </span>
         </div>
       </div>
-      <div class="flex items-center gap-2">
-        <button onclick="openSettingsModal()" class="w-10 h-10 rounded-xl bg-inputBg border border-cardBorder text-slate-300 flex items-center justify-center active:scale-95 transition-transform" title="Impostazioni & Sicurezza">
-          <i class="fa-solid fa-gear text-emerald-400 text-lg"></i>
+      <div class="ml-auto flex items-center gap-2 flex-shrink-0">
+        <span id="chip-offline" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400"><i class="fa-solid fa-circle-check"></i> Funziona offline</span>
+        <button type="button" id="chip-backup" onclick="exportFullBackup()" title="Scarica un backup" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-cardBg border border-cardBorder text-slate-400"><i class="fa-solid fa-cloud-arrow-down"></i> <span id="chip-backup-text">Backup</span></button>
+        <button type="button" onclick="toggleTheme()" class="w-11 h-11 rounded-xl bg-cardBg border border-cardBorder text-slate-400 flex items-center justify-center active:scale-95" title="Tema chiaro / scuro">
+          <i class="fa-solid fa-circle-half-stroke text-lg"></i>
         </button>
       </div>
     </header>
@@ -222,28 +310,41 @@
     </div>
 
     <!-- TOP DASHBOARD COUNTERS -->
-    <div class="grid grid-cols-3 gap-2.5 mb-4">
-      <div class="bg-cardBg border border-cardBorder rounded-xl p-2.5 text-center shadow-sm">
-        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Totale Lotti</div>
-        <div class="text-xl font-black text-emerald-400" id="cnt-totale">0</div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-3 mb-4">
+      <div class="kpi-tile bg-cardBg border border-cardBorder rounded-2xl p-3 md:p-4 shadow-sm">
+        <div class="kpi-ico bg-emerald-500/15 text-emerald-400"><i class="fa-solid fa-boxes-stacked"></i></div>
+        <div><div class="text-xl md:text-2xl font-extrabold leading-none text-slate-100" id="cnt-totale">0</div><div class="text-[11px] md:text-xs font-bold text-slate-400 mt-1">Lotti registrati</div></div>
       </div>
-      <div class="bg-cardBg border border-cardBorder rounded-xl p-2.5 text-center shadow-sm">
-        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Non conformità</div>
-        <div class="text-xl font-black text-amber-400" id="cnt-anomalie">0</div>
+      <div class="kpi-tile bg-cardBg border border-cardBorder rounded-2xl p-3 md:p-4 shadow-sm">
+        <div class="kpi-ico bg-blue-500/15 text-blue-400"><i class="fa-solid fa-calendar-day"></i></div>
+        <div><div class="text-xl md:text-2xl font-extrabold leading-none text-slate-100" id="cnt-oggi">0</div><div class="text-[11px] md:text-xs font-bold text-slate-400 mt-1">Oggi</div></div>
       </div>
-      <div class="bg-cardBg border border-cardBorder rounded-xl p-2.5 text-center shadow-sm">
-        <div class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Oggi</div>
-        <div class="text-xl font-black text-blue-400" id="cnt-oggi">0</div>
+      <button type="button" onclick="showNonConformi()" class="kpi-tile bg-cardBg border border-cardBorder rounded-2xl p-3 md:p-4 shadow-sm active:scale-98" title="Mostra le non conformità nel registro">
+        <div class="kpi-ico bg-rose-500/15 text-rose-400"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        <div><div class="text-xl md:text-2xl font-extrabold leading-none text-slate-100" id="cnt-anomalie">0</div><div class="text-[11px] md:text-xs font-bold text-slate-400 mt-1">Non conformi</div></div>
+      </button>
+      <div class="kpi-tile bg-cardBg border border-cardBorder rounded-2xl p-3 md:p-4 shadow-sm" title="Prodotti ricevuti o preparati che scadono entro 3 giorni">
+        <div class="kpi-ico bg-amber-500/15 text-amber-400"><i class="fa-solid fa-hourglass-half"></i></div>
+        <div><div class="text-xl md:text-2xl font-extrabold leading-none text-slate-100" id="cnt-scadenza">0</div><div class="text-[11px] md:text-xs font-bold text-slate-400 mt-1">In scadenza (3 gg)</div></div>
       </div>
     </div>
 
     <!-- MAIN VIEW 1: RICEVIMENTO MERCI -->
     <div id="view-ricevimento" class="space-y-4">
 
-      <div class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start">
+      <div id="ricevimento-grid" class="space-y-4 md:space-y-0 md:grid md:grid-cols-2 md:gap-4 md:items-start">
 
       <!-- MAIN RECEIVING FORM CARD -->
-      <div class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-4">
+      <div id="receiving-form-card" class="bg-cardBg border border-cardBorder rounded-[20px] p-4 md:p-5 shadow-lg space-y-4">
+
+        <div class="flex items-center gap-2 flex-wrap">
+          <h2 class="text-base font-extrabold text-slate-100">Nuovo ricevimento</h2>
+          <div class="flex gap-1.5 ml-auto">
+            <span class="step-chip on" id="step-merce">1 Merce</span>
+            <span class="step-chip" id="step-controlli">2 Controlli</span>
+            <span class="step-chip" id="step-registra">3 Registra</span>
+          </div>
+        </div>
 
         <!-- OCR CAMERA SCANNER BANNER -->
         <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between gap-3">
@@ -373,8 +474,16 @@
                 <span>2. Temperatura misurata (sonda) °C</span>
                 <span id="temp-limit-hint" class="normal-case font-semibold text-slate-500"></span>
               </div>
+              <div class="flex items-center gap-2 bg-inputBg border border-cardBorder rounded-2xl p-2.5">
+                <button type="button" onclick="stepTemp(-0.5)" class="w-12 h-12 rounded-xl bg-cardBg border border-cardBorder text-lg font-bold text-slate-200 active:scale-95 flex-shrink-0" title="−0,5 °C">−</button>
+                <input type="text" id="temp_valore" inputmode="decimal" placeholder="—" autocomplete="off" class="w-full min-w-0 h-12 bg-transparent text-center text-3xl font-extrabold text-slate-100 focus:outline-none" oninput="updateHaccpOutcome()">
+                <button type="button" onclick="stepTemp(0.5)" class="w-12 h-12 rounded-xl bg-cardBg border border-cardBorder text-lg font-bold text-slate-200 active:scale-95 flex-shrink-0" title="+0,5 °C">+</button>
+              </div>
+              <div id="temp-scale-wrap" class="px-1 pt-3 pb-1">
+                <div id="temp-scale" class="temp-scale"><div id="temp-scale-mark" class="mark hidden"></div></div>
+                <div id="temp-scale-labels" class="flex justify-between text-[10.5px] font-bold text-slate-400 mt-2"></div>
+              </div>
               <div class="flex gap-1.5">
-                <input type="text" id="temp_valore" inputmode="decimal" placeholder="Es. 3,2" autocomplete="off" class="touch-target w-28 bg-inputBg border border-cardBorder rounded-xl px-3 text-sm font-bold text-slate-100 focus:outline-none focus:border-emerald-400" oninput="updateHaccpOutcome()">
                 <div class="flex-1 grid grid-cols-3 gap-1.5">
                   <button type="button" class="py-2 bg-inputBg border border-cardBorder rounded-xl text-xs font-bold text-slate-300 active:scale-95" onclick="setTempQuick('+2.0')">+2.0</button>
                   <button type="button" class="py-2 bg-inputBg border border-cardBorder rounded-xl text-xs font-bold text-slate-300 active:scale-95" onclick="setTempQuick('+4.0')">+4.0</button>
@@ -428,22 +537,10 @@
       </div>
 
       <!-- REGISTRY CARDS VIEW SECTION (sempre visibile su tablet) -->
-      <div id="registry-card-section" class="bg-cardBg border border-cardBorder rounded-2xl p-4 shadow-lg space-y-3 md:sticky md:top-4">
-        <div class="flex items-center justify-between gap-2 flex-wrap">
-          <h2 class="text-sm font-extrabold text-slate-100 flex items-center gap-1.5">
-            <i class="fa-solid fa-database text-emerald-400"></i> Registro
-          </h2>
-          <div class="flex items-center gap-1.5">
-            <button onclick="openPdfModal('email')" class="px-2 py-1.5 bg-blue-500/20 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-bold active:scale-95">
-              <i class="fa-solid fa-envelope"></i> Email
-            </button>
-            <button onclick="openPdfModal('pdf')" class="px-2.5 py-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
-              <i class="fa-solid fa-file-pdf"></i> PDF
-            </button>
-            <button onclick="openPdfModal('excel')" class="px-2.5 py-1.5 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-bold active:scale-95 flex items-center gap-1">
-              <i class="fa-solid fa-file-excel"></i> Excel (.xls)
-            </button>
-          </div>
+      <div id="registry-card-section" class="bg-cardBg border border-cardBorder rounded-[20px] p-4 md:p-5 shadow-lg space-y-3 md:sticky md:top-4">
+        <div class="flex items-center justify-between gap-2">
+          <h2 class="text-base font-extrabold text-slate-100">Registro</h2>
+          <span id="registry-count" class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-inputBg border border-cardBorder text-slate-400"></span>
         </div>
 
         <div class="flex gap-2 items-center">
@@ -452,9 +549,14 @@
             <i class="fa-solid fa-filter"></i>
             <span id="registry-filter-dot" class="hidden absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-cardBg"></span>
           </button>
-          <label class="text-[10.5px] text-slate-400 flex items-center gap-1 whitespace-nowrap select-none">
-            <input type="checkbox" id="show-annullati" onchange="renderRegistry()"> Annullati
-          </label>
+          <input type="checkbox" id="show-annullati" class="hidden" onchange="renderRegistry()">
+        </div>
+
+        <div class="flex gap-2 flex-wrap">
+          <button type="button" class="fchip" id="fchip-oggi" onclick="quickFilter('oggi')">Oggi</button>
+          <button type="button" class="fchip" id="fchip-mese" onclick="quickFilter('mese')">Questo mese</button>
+          <button type="button" class="fchip fchip-bad" id="fchip-nc" onclick="quickFilter('nc')"><i class="fa-solid fa-triangle-exclamation"></i> Non conformi</button>
+          <button type="button" class="fchip" id="fchip-annullati" onclick="quickFilter('annullati')">Annullati</button>
         </div>
 
         <div id="registry-filter-summary" class="hidden flex items-center justify-between gap-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl px-3 py-2 text-[11px] text-emerald-300">
@@ -462,7 +564,19 @@
           <button type="button" onclick="clearRegistryFilter()" class="flex-shrink-0 font-bold text-emerald-400 px-1 active:scale-95"><i class="fa-solid fa-xmark"></i> Togli filtro</button>
         </div>
 
-        <div id="registry-list" class="space-y-2.5 max-h-[500px] md:max-h-[calc(100vh-300px)] overflow-y-auto pr-1"></div>
+        <div id="registry-list" class="space-y-2.5 max-h-[500px] md:max-h-[calc(100vh-360px)] overflow-y-auto pr-1"></div>
+
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <button onclick="openPdfModal('pdf')" class="h-11 rounded-xl bg-cardBg border border-cardBorder text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-file-pdf text-red-400"></i> PDF
+          </button>
+          <button onclick="openPdfModal('excel')" class="h-11 rounded-xl bg-cardBg border border-cardBorder text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-file-excel text-emerald-400"></i> Excel
+          </button>
+          <button onclick="openPdfModal('email')" class="h-11 rounded-xl bg-cardBg border border-cardBorder text-slate-200 text-xs font-bold flex items-center justify-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-envelope text-blue-400"></i> Email
+          </button>
+        </div>
       </div>
 
       </div>
@@ -588,7 +702,7 @@
       <!-- THERMAL LABEL PREVIEW PREPARED -->
       <div id="label-output-wrapper" class="space-y-3 hidden md:sticky md:top-4">
         <div class="bg-slate-200 text-slate-950 p-4 rounded-2xl border-2 border-dashed border-slate-400 w-[270px] mx-auto shadow-2xl">
-          <div class="thermal-label bg-white p-3 border border-black font-mono text-[11px] leading-tight text-slate-950" id="printable-label">
+          <div class="paper thermal-label bg-white p-3 border border-black font-mono text-[11px] leading-tight text-slate-950" id="printable-label">
             <div class="text-center border-b-2 border-black pb-1 mb-1.5">
               <div class="font-black text-xs uppercase tracking-tight" id="lbl-company-header">GESTIONE HACCP</div>
               <div class="text-[8px] uppercase tracking-wider font-bold">Autocontrollo HACCP</div>
@@ -643,15 +757,14 @@
   </div>
 
   <!-- FIXED BOTTOM NAVIGATION BAR -->
-  <nav class="fixed bottom-0 left-0 right-0 bg-cardBg/95 backdrop-blur-md border-t border-cardBorder px-6 py-2.5 z-40 no-print">
-    <div class="max-w-lg mx-auto grid grid-cols-2 gap-3">
-      <button id="tab-ricevimento-btn" onclick="switchTab('ricevimento')" class="touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 transition-all">
-        <i class="fa-solid fa-truck-ramp-box text-base"></i> Ricevimento
-      </button>
-      <button id="tab-etichette-btn" onclick="switchTab('etichette')" class="touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-slate-400 bg-transparent transition-all">
-        <i class="fa-solid fa-print text-base"></i> Semilavorati / Preparazioni
-      </button>
-    </div>
+  <nav class="app-nav no-print">
+    <img src="icons/logo-96.png" alt="Gestione HACCP" class="nav-logo">
+    <button type="button" class="nav-btn on" data-tab="ricevimento" id="tab-ricevimento-btn" onclick="switchTab('ricevimento')"><i class="fa-solid fa-truck-ramp-box"></i>Ricevimento</button>
+    <button type="button" class="nav-btn" data-tab="etichette" id="tab-etichette-btn" onclick="switchTab('etichette')"><i class="fa-solid fa-kitchen-set"></i>Preparazioni</button>
+    <button type="button" class="nav-btn" data-tab="registro" onclick="switchTab('registro')"><i class="fa-solid fa-book"></i>Registro</button>
+    <button type="button" class="nav-btn" onclick="openAnagrafiche('fornitori')"><i class="fa-solid fa-address-book"></i>Anagrafiche</button>
+    <div class="nav-spacer"></div>
+    <button type="button" class="nav-btn" onclick="openSettingsModal()"><i class="fa-solid fa-gear"></i>Impostazioni</button>
   </nav>
 
   <!-- BOTTOM TOAST NOTIFICATION -->
@@ -694,7 +807,7 @@
   </div>
 
   <!-- ELENCO LOTTI RICEVUTI DA CUI SCEGLIERE LE MATERIE PRIME -->
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="lot-picker-modal">
+  <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="lot-picker-modal">
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-lg p-4 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
@@ -712,7 +825,7 @@
   </div>
 
   <!-- FILTRO DEL REGISTRO: PERIODO ED ESITO -->
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="filter-modal">
+  <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="filter-modal">
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
@@ -757,7 +870,7 @@
   </div>
 
   <!-- STAMPA REGISTRO IN PDF: PERIODO DAL / AL -->
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="pdf-modal">
+  <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="pdf-modal">
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
@@ -789,16 +902,24 @@
   </div>
 
   <!-- SETTINGS & DATA SECURITY MODAL -->
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200" id="settings-modal">
+  <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200" id="settings-modal">
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
-          <i class="fa-solid fa-shield-halved text-emerald-400"></i> Impostazioni & Sicurezza Dati
+          <i class="fa-solid fa-gear text-emerald-400"></i> Impostazioni & Sicurezza Dati
         </h3>
         <button onclick="closeSettingsModal()" class="text-slate-400 text-lg px-1">&times;</button>
       </div>
 
       <div class="space-y-3">
+        <div class="space-y-1">
+          <label for="cfg-theme" class="text-[10px] font-bold text-slate-400 uppercase">Aspetto (solo su questo dispositivo)</label>
+          <select id="cfg-theme" onchange="setTheme(this.value)" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
+            <option value="chiaro">Chiaro</option>
+            <option value="scuro">Scuro</option>
+            <option value="auto">Automatico (come il dispositivo)</option>
+          </select>
+        </div>
         <div class="space-y-1">
           <label class="text-[10px] font-bold text-slate-400 uppercase">Nome attività / Ragione sociale</label>
           <input type="text" id="cfg-company-name" class="touch-target w-full bg-inputBg border border-cardBorder rounded-xl px-3 text-xs text-slate-100 focus:outline-none focus:border-emerald-400">
@@ -875,7 +996,7 @@
   </div>
 
   <!-- ANAGRAFICHE: FORNITORI E PRODOTTI -->
-  <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="anag-modal">
+  <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="anag-modal">
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-lg p-4 space-y-3 shadow-2xl max-h-[90vh] flex flex-col">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
@@ -909,14 +1030,14 @@
   </div>
 
   <!-- AUDIT REPORT MODAL -->
-  <div class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200" id="report-modal">
+  <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200" id="report-modal">
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-cardBorder pb-2 no-print">
         <h3 class="text-xs font-bold text-slate-100">Scheda Audit Rintracciabilità</h3>
         <button onclick="closeReportModal()" class="text-slate-400 text-lg px-1">&times;</button>
       </div>
 
-      <div id="report-modal-body" class="bg-white text-slate-950 p-3 rounded-xl text-xs space-y-2"></div>
+      <div id="report-modal-body" class="paper bg-white text-slate-950 p-3 rounded-xl text-xs space-y-2"></div>
 
       <div class="flex flex-wrap gap-1.5 pt-1 no-print">
         <button onclick="shareSingleWhatsApp()" class="flex-1 py-2 bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-xs rounded-lg flex items-center justify-center gap-1 active:scale-95">
@@ -1328,6 +1449,13 @@
       document.getElementById('data_ricevimento').value = today;
       document.getElementById('lbl_data_prod').value = today;
       renderAllergenSelector();
+      applyTheme(document.documentElement.dataset.themePref || 'chiaro');
+      document.getElementById('header-date').textContent = 'Registro HACCP · ' +
+        new Date().toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      document.getElementById('haccp-form').addEventListener('input', updateSteps);
+      if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => {
+        if (document.documentElement.dataset.themePref === 'auto') applyTheme('auto');
+      });
 
       let storageOk = true;
       try {
@@ -1351,6 +1479,9 @@
 
       initAutoSaveEngine();
       registerServiceWorker();
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then(() => document.getElementById('chip-offline').classList.add('md:inline-flex')).catch(() => {});
+      }
       if (!storageOk) return;
 
       await checkSavedDrafts();
@@ -1522,15 +1653,29 @@
     }
 
     /* ===== PROMEMORIA BACKUP ===== */
+    function updateBackupChip(days) {
+      const chip = document.getElementById('chip-backup');
+      const txt = document.getElementById('chip-backup-text');
+      const vecchio = days === null || days >= 7;
+      txt.textContent = days === null ? 'Nessun backup' : days === 0 ? 'Backup oggi' : days === 1 ? 'Backup ieri' : `Backup ${days} giorni fa`;
+      chip.classList.toggle('bg-amber-500/15', vecchio);
+      chip.classList.toggle('text-amber-400', vecchio);
+      chip.classList.toggle('border-transparent', vecchio);
+      chip.classList.toggle('text-slate-400', !vecchio);
+    }
+
     function checkBackupReminder() {
       const banner = document.getElementById('backup-reminder-banner');
       const activeCount = registryData.filter(isActive).length;
       if (activeCount === 0) {
         banner.classList.add('hidden');
+        const last = appMeta.lastBackup ? new Date(appMeta.lastBackup) : null;
+        updateBackupChip(last ? Math.floor((Date.now() - last.getTime()) / 86400000) : null);
         return;
       }
       const last = appMeta.lastBackup ? new Date(appMeta.lastBackup) : null;
       const days = last ? Math.floor((Date.now() - last.getTime()) / 86400000) : null;
+      updateBackupChip(days);
       if (days === null || days >= 7) {
         document.getElementById('backup-reminder-msg').innerText = days === null
           ? 'Nessun backup del registro è mai stato scaricato su questo tablet.'
@@ -1581,27 +1726,44 @@
       updateHaccpOutcome();
     }
 
+    /* Viste: ricevimento (modulo + registro affiancati su tablet), registro (solo elenco), etichette */
     function switchTab(tab) {
-      const rBtn = document.getElementById('tab-ricevimento-btn');
-      const eBtn = document.getElementById('tab-etichette-btn');
-      const rView = document.getElementById('view-ricevimento');
-      const eView = document.getElementById('view-etichette');
-      const activeCls = "touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-emerald-400 bg-emerald-500/10 border border-emerald-500/30 transition-all";
-      const idleCls = "touch-target flex flex-col items-center justify-center rounded-xl font-bold text-xs gap-1 text-slate-400 bg-transparent transition-all";
-
-      if (tab === 'ricevimento') {
-        rBtn.className = activeCls;
-        eBtn.className = idleCls;
-        rView.classList.remove('hidden');
-        eView.classList.add('hidden');
-      } else {
-        eBtn.className = activeCls;
-        rBtn.className = idleCls;
-        eView.classList.remove('hidden');
-        rView.classList.add('hidden');
+      document.body.dataset.view = tab;
+      document.querySelectorAll('.nav-btn[data-tab]').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+      const etichette = tab === 'etichette';
+      document.getElementById('view-ricevimento').classList.toggle('hidden', etichette);
+      document.getElementById('view-etichette').classList.toggle('hidden', !etichette);
+      if (etichette) {
         refreshIncomingLotDatalist();
         generateInternalBatchCode();
       }
+      window.scrollTo({ top: 0 });
+    }
+
+    function showNonConformi() {
+      registryFilter = { dal: '', al: '', esito: 'nc' };
+      switchTab('registro');
+      renderRegistry();
+    }
+
+    /* ===== TEMA CHIARO / SCURO (preferenza di questo dispositivo) ===== */
+    function applyTheme(pref) {
+      const scuro = pref === 'scuro' || (pref === 'auto' && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.dataset.theme = scuro ? 'dark' : 'light';
+      document.documentElement.dataset.themePref = pref;
+      const meta = document.querySelector('meta[name="theme-color"]');
+      if (meta) meta.content = scuro ? '#0f1512' : '#f4f6f3';
+      const sel = document.getElementById('cfg-theme');
+      if (sel) sel.value = pref;
+    }
+
+    function setTheme(pref) {
+      try { localStorage.setItem('gestione_haccp_tema', pref); } catch (e) {}
+      applyTheme(pref);
+    }
+
+    function toggleTheme() {
+      setTheme(document.documentElement.dataset.theme === 'dark' ? 'chiaro' : 'scuro');
     }
 
     /* Svuota il modulo del ricevimento solo dopo conferma (si perde quanto scritto) */
@@ -1633,6 +1795,54 @@
 
     function formatTemp(v) {
       return (v > 0 ? '+' : '') + v.toFixed(1) + '°C';
+    }
+
+    function stepTemp(delta) {
+      const el = document.getElementById('temp_valore');
+      const cur = parseDecimal(el.value);
+      let base = cur;
+      if (base === null) {
+        const lim = tempLimitFor(document.getElementById('tipo_prodotto').value);
+        base = lim === null ? 0 : lim - delta;
+      }
+      const v = Math.round((base + delta) * 10) / 10;
+      el.value = (v > 0 ? '+' : '') + v.toFixed(1);
+      updateHaccpOutcome();
+      debounceAutoSave();
+    }
+
+    /* Scala colorata: zona ammessa (verde) fino al limite, oltre in rosso */
+    function renderTempScale(tipo, limit, val) {
+      const wrap = document.getElementById('temp-scale-wrap');
+      if (tipo === 'Secco' || limit === null) { wrap.classList.add('hidden'); return; }
+      wrap.classList.remove('hidden');
+      const lo = limit - 8, hi = limit + 6;
+      const pct = v => Math.max(0, Math.min(100, (v - lo) / (hi - lo) * 100));
+      const p = pct(limit);
+      document.getElementById('temp-scale').style.background =
+        `linear-gradient(90deg, rgb(var(--c-emerald-500)) 0 ${p}%, rgb(var(--c-amber-500)) ${p}% ${Math.min(100, p + 8)}%, rgb(var(--c-rose-500)) ${Math.min(100, p + 8)}%)`;
+      const mark = document.getElementById('temp-scale-mark');
+      if (val === null) mark.classList.add('hidden');
+      else { mark.classList.remove('hidden'); mark.style.left = pct(val) + '%'; }
+      const fmt = v => (v > 0 ? '+' : '') + v + '°';
+      document.getElementById('temp-scale-labels').innerHTML =
+        [lo, lo + 4, limit, limit + 3, hi].map((v, i) => `<span${i === 2 ? ' class="text-slate-200"' : ''}>${fmt(v)}</span>`).join('');
+    }
+
+    /* Passi del ricevimento: 1 merce, 2 controlli, 3 pronto da registrare */
+    function updateSteps() {
+      const filled = id => (document.getElementById(id).value || '').trim() !== '';
+      const merce = ['fornitore', 'nome_prodotto', 'lotto', 'scadenza'].every(filled);
+      const t = evaluateTemperature();
+      const controlli = merce && (t.valid || !t.required);
+      const set = (id, done, on) => {
+        const el = document.getElementById(id);
+        el.classList.toggle('done', done);
+        el.classList.toggle('on', on);
+      };
+      set('step-merce', merce, !merce);
+      set('step-controlli', controlli, merce && !controlli);
+      set('step-registra', false, controlli);
     }
 
     function setTempQuick(v) {
@@ -1684,6 +1894,7 @@
         : `limite ≤ ${formatTemp(limit)}`;
 
       const t = evaluateTemperature();
+      renderTempScale(tipo, limit, t.valore);
       const esitoEl = document.getElementById('temp-esito');
       if (t.errore) {
         esitoEl.innerHTML = `<span class="text-rose-400">${t.errore}</span>`;
@@ -1706,10 +1917,15 @@
         box.className = 'text-[11px] font-semibold rounded-xl p-2.5 border bg-rose-500/10 border-rose-500/40 text-rose-300';
         box.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> NON CONFORMITÀ: ${problems.join(', ')}. Descrivi l'azione correttiva nelle note (es. merce respinta, reso al fornitore).`;
         noteLabel.innerHTML = 'Azione correttiva <span class="text-rose-400">*</span>';
+      } else if (t.valid && document.getElementById('scadenza').value) {
+        box.className = 'text-sm font-extrabold rounded-2xl p-3 bg-emerald-500/15 text-emerald-400 flex items-center gap-2';
+        box.innerHTML = '<i class="fa-solid fa-circle-check text-lg"></i> Merce conforme';
+        noteLabel.innerText = 'Note / Azioni Correttive';
       } else {
         box.className = 'hidden';
         noteLabel.innerText = 'Note / Azioni Correttive';
       }
+      updateSteps();
     }
 
     function isActive(item) {
@@ -2123,6 +2339,39 @@
       document.getElementById('cnt-anomalie').innerText = active.filter(isNonConforme).length;
       const todayStr = todayLocal();
       document.getElementById('cnt-oggi').innerText = active.filter(d => d.data_ricevimento === todayStr).length;
+      const limite = new Date(); limite.setDate(limite.getDate() + 3);
+      const limiteStr = `${limite.getFullYear()}-${pad2(limite.getMonth() + 1)}-${pad2(limite.getDate())}`;
+      document.getElementById('cnt-scadenza').innerText =
+        active.filter(d => d.scadenza && d.scadenza >= todayStr && d.scadenza <= limiteStr).length;
+    }
+
+    function dayLabel(iso) {
+      if (!iso) return 'Senza data';
+      const oggi = todayLocal();
+      const ieri = new Date(); ieri.setDate(ieri.getDate() - 1);
+      const ieriStr = `${ieri.getFullYear()}-${pad2(ieri.getMonth() + 1)}-${pad2(ieri.getDate())}`;
+      if (iso === oggi) return 'Oggi';
+      if (iso === ieriStr) return 'Ieri';
+      const [y, m, d] = iso.split('-').map(Number);
+      return new Date(y, m - 1, d).toLocaleDateString('it-IT', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    }
+
+    /* Filtri rapidi: Oggi / Questo mese (alternativi), Non conformi, Annullati */
+    function quickFilter(tipo) {
+      const f = { ...registryFilter };
+      if (tipo === 'oggi' || tipo === 'mese') {
+        const [dal, al] = computeRange(tipo);
+        const giaAttivo = f.dal === dal && f.al === al;
+        f.dal = giaAttivo ? '' : dal;
+        f.al = giaAttivo ? '' : al;
+      } else if (tipo === 'nc') {
+        f.esito = f.esito === 'nc' ? 'tutti' : 'nc';
+      } else if (tipo === 'annullati') {
+        const cb = document.getElementById('show-annullati');
+        cb.checked = !cb.checked;
+      }
+      registryFilter = f;
+      renderRegistry();
     }
 
     /* ===== FILTRO DEL REGISTRO ===== */
@@ -2199,6 +2448,14 @@
     }
 
     function updateRegistryFilterUi() {
+      const [oDal, oAl] = computeRange('oggi');
+      const [mDal, mAl] = computeRange('mese');
+      document.getElementById('fchip-oggi').classList.toggle('on', registryFilter.dal === oDal && registryFilter.al === oAl);
+      document.getElementById('fchip-mese').classList.toggle('on', registryFilter.dal === mDal && registryFilter.al === mAl);
+      document.getElementById('fchip-nc').classList.toggle('on', registryFilter.esito === 'nc');
+      document.getElementById('fchip-annullati').classList.toggle('on', document.getElementById('show-annullati').checked);
+      const nAttivi = registryData.filter(isActive).length;
+      document.getElementById('registry-count').textContent = nAttivi === 1 ? '1 registrazione' : `${nAttivi} registrazioni`;
       const active = isRegistryFilterActive();
       const btn = document.getElementById('registry-filter-btn');
       btn.classList.toggle('text-emerald-400', active);
@@ -2234,7 +2491,11 @@
         return;
       }
 
+      let lastDay = null;
       listContainer.innerHTML = filtered.map(item => {
+        const day = item.data_ricevimento || '';
+        const dayHeader = day !== lastDay ? `<div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider px-1 pt-1">${dayLabel(day)}</div>` : '';
+        lastDay = day;
         const annullato = !isActive(item);
         const nc = isNonConforme(item);
         const badge = annullato
@@ -2246,17 +2507,17 @@
           ? `${escapeHtml(item.temp_check)}${item.temp_esito === 'Non conforme' ? ' ⚠' : ''}`
           : 'N.D.';
 
-        return `
-        <div class="bg-inputBg/80 border ${annullato ? 'border-slate-600/40 opacity-60 record-annullato' : nc ? 'border-rose-500/50' : 'border-cardBorder'} rounded-xl p-3 space-y-2">
+        return dayHeader + `
+        <div class="bg-cardBg border border-l-4 ${annullato ? 'border-cardBorder border-l-slate-500 opacity-60 record-annullato' : nc ? 'border-rose-500/40 border-l-rose-500' : 'border-cardBorder border-l-emerald-500'} rounded-2xl p-3 space-y-2">
           <div class="flex items-start justify-between gap-2">
             <div>
-              <div class="record-title text-xs font-black text-slate-100">${escapeHtml(item.nome_prodotto)}</div>
+              <div class="record-title text-sm font-extrabold text-slate-100">${escapeHtml(item.nome_prodotto)}</div>
               <div class="text-[11px] font-semibold text-emerald-400"><i class="fa-solid fa-truck text-[10px]"></i> ${escapeHtml(item.fornitore)}</div>
             </div>
             ${badge}
           </div>
 
-          <div class="grid grid-cols-2 gap-1.5 text-[10.5px] text-slate-400 bg-appBg/60 p-2 rounded-lg">
+          <div class="grid grid-cols-2 gap-1.5 text-[11px] text-slate-400 bg-inputBg p-2 rounded-xl">
             <span>Data: <strong class="text-slate-200">${formatDate(item.data_ricevimento)}</strong></span>
             <span>Lotto: <strong class="text-slate-200 font-mono">${escapeHtml(item.lotto)}</strong></span>
             <span>Quantità: <strong class="text-slate-200">${escapeHtml(item.quantita)}</strong></span>
