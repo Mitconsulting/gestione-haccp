@@ -1,6 +1,6 @@
 /* Service worker: rende l'app utilizzabile offline sul tablet.
    I DATI del registro non passano di qui: stanno in IndexedDB. */
-const CACHE = 'gestione-haccp-v1.2.18';
+const CACHE = 'gestione-haccp-v1.2.19';
 
 const APP_FILES = [
   './',
@@ -20,7 +20,8 @@ const CDN_FILES = [
   'https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js',
-  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js'
+  'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js',
+  'https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js'
 ];
 
 self.addEventListener('install', event => {

@@ -24,7 +24,7 @@ Al primo avvio l'app chiede il **nome dell'attività**, mostrato in intestazione
 Il nome sotto l'icona del tablet è "Gestione HACCP"; con Chrome su Android si può cambiare al momento dell'installazione.
 
 ## Aggiornare l'app
-Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.19`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
+Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.20`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
 
 ## Novità rispetto alla v1.1
 - Archivio IndexedDB al posto di localStorage, archiviazione persistente e stato dell'archivio nelle Impostazioni.
@@ -42,6 +42,7 @@ Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `
 - PDF, Excel ed Email del registro per periodo Dal/Al (scorciatoie Oggi, Questo mese, Mese scorso, Tutto; A4 orizzontale, non conformi evidenziati, annullati barrati, spazio firma); Excel con colonne Stato ed Esito, righe NC evidenziate.
 - Filtro del registro (imbuto accanto alla ricerca): periodo Dal/Al ed esito (tutti, solo non conformi, solo conformi), con riepilogo e "Togli filtro".
 - Nuova grafica: tema chiaro (scuro o automatico da Impostazioni o dal pulsante ◐), barra laterale su tablet e in basso su telefono (Ricevimento, Preparazioni, Registro, Anagrafiche, Impostazioni), 4 indicatori con "In scadenza (3 gg)", passi del ricevimento, temperatura con − / + e scala colorata, registro per giorno con filtri rapidi. Versione precedente: tag git `v1.2.17-tema-scuro`.
+- Lettura etichette: **Codice a barre** GS1 (GS1-128, DataMatrix, QR GS1/Digital Link, EAN) che compila lotto, scadenza (AI 17/15) e peso (AI 310x) e ricorda il prodotto per codice; **Foto testo** migliorata (foto contrastata, avanzamento, righe lette assegnabili a Prodotto/Lotto/Scadenza).
 - OCR migliorato: riconosce lotto, prodotto e scadenza.
 - Ripristino del backup con conferma; "Svuota registro" richiede di scrivere SVUOTA e scarica prima un backup.
 - Etichette: i campi "Codice lotto" e "Nome materia prima" propongono solo i lotti e i prodotti registrati nel Ricevimento (scegliendo il prodotto si compila il lotto più recente e viceversa); pulsante "Scegli dai lotti ricevuti" con elenco a tocco, avvisi per lotti scaduti o non conformi.
