@@ -872,6 +872,63 @@
     </div>
   </div>
 
+  <!-- INFO LICENZA: ATTIVAZIONE, COSTO, PAGAMENTO -->
+  <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-[60] flex items-center justify-center p-4 hidden" id="lic-info-modal">
+    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-cardBorder pb-2">
+        <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-blue-400"></i> Licenza d'uso: come funziona
+        </h3>
+        <button onclick="closeLicenseInfo()" class="text-slate-400 text-lg px-1">&times;</button>
+      </div>
+
+      <div class="flex items-center justify-between gap-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-3">
+        <div>
+          <div class="text-[10px] font-bold text-slate-400 uppercase">Costo annuale</div>
+          <div class="text-xl font-extrabold text-emerald-400"><span id="lic-info-prezzo"></span></div>
+        </div>
+        <div class="text-[11px] text-slate-400 text-right leading-snug">per un tablet<br>12 mesi · prova gratuita 30 giorni</div>
+      </div>
+
+      <ol class="space-y-2.5 text-[11.5px] text-slate-300 leading-snug">
+        <li class="flex gap-2.5"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">1</span>
+          <div><strong class="text-slate-100">Richiedi la licenza.</strong> Con i pulsanti qui sotto invia a MIT Consulting il codice di questa installazione (<span id="lic-info-id" class="font-mono font-bold"></span>)
+            insieme ai <strong class="text-slate-100">dati per la fattura</strong>:
+            <ul class="list-disc pl-4 mt-1 text-slate-400">
+              <li>ragione sociale</li>
+              <li>partita IVA e/o codice fiscale</li>
+              <li>indirizzo della sede</li>
+              <li>codice destinatario SDI oppure PEC</li>
+            </ul>
+            <span class="text-slate-400">Il messaggio è già pronto: completa solo i dati di fatturazione.</span>
+          </div></li>
+        <li class="flex gap-2.5"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">2</span>
+          <div><strong class="text-slate-100">Paga con bonifico bancario.</strong> Riceverai l'IBAN e l'importo da versare.
+            Nella causale indica <em>"Licenza Gestione HACCP"</em> e il codice installazione.</div></li>
+        <li class="flex gap-2.5"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">3</span>
+          <div><strong class="text-slate-100">Ricevi licenza e fattura.</strong> Dopo l'accredito ti arrivano via email o WhatsApp la fattura elettronica e la licenza.</div></li>
+        <li class="flex gap-2.5"><span class="flex-shrink-0 w-6 h-6 rounded-full bg-emerald-500 text-slate-950 font-extrabold text-xs flex items-center justify-center">4</span>
+          <div><strong class="text-slate-100">Attiva.</strong> Apri <strong>su questo tablet</strong> il link ricevuto, oppure incolla il codice licenza in questa sezione e tocca <em>Attiva licenza</em>. Non serve reinstallare nulla e i dati restano dove sono.</div></li>
+      </ol>
+
+      <div class="text-[10.5px] text-slate-400 leading-normal bg-appBg/60 border border-cardBorder rounded-lg p-2.5 space-y-1">
+        <p><strong class="text-slate-300">Rinnovo:</strong> l'app avvisa 30 giorni prima della scadenza. La procedura è la stessa e il nuovo anno parte dal giorno dopo la scadenza precedente, anche se rinnovi in anticipo.</p>
+        <p><strong class="text-slate-300">Alla scadenza:</strong> l'app passa in sola lettura. Il registro resta consultabile, stampabile ed esportabile: nessun dato viene perso.</p>
+        <p><strong class="text-slate-300">Più tablet:</strong> serve una licenza per ciascun tablet; un tablet nuovo o un'app reinstallata hanno un nuovo codice.</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2">
+        <button type="button" onclick="sendInstallId('email')" class="touch-target bg-inputBg border border-cardBorder text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-envelope text-emerald-400"></i> Richiedi via email
+        </button>
+        <button type="button" onclick="sendInstallId('whatsapp')" class="touch-target bg-inputBg border border-cardBorder text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> Richiedi su WhatsApp
+        </button>
+      </div>
+      <p class="text-[10px] text-slate-500 text-center">MIT Consulting · <span id="lic-info-contatti"></span></p>
+    </div>
+  </div>
+
   <!-- FILTRO DEL REGISTRO: PERIODO ED ESITO -->
   <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden" id="filter-modal">
     <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-3 shadow-2xl">
@@ -1005,8 +1062,13 @@
 
       <!-- LICENZA D'USO -->
       <div id="lic-section" class="pt-3 border-t border-cardBorder space-y-2">
-        <div class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-          <i class="fa-solid fa-key"></i> Licenza d'uso
+        <div class="flex items-center justify-between gap-2">
+          <div class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i class="fa-solid fa-key"></i> Licenza d'uso
+          </div>
+          <button type="button" onclick="openLicenseInfo()" class="px-3 py-1.5 rounded-lg bg-blue-500/15 text-blue-400 border border-blue-500/30 text-[11px] font-extrabold flex items-center gap-1.5 active:scale-95">
+            <i class="fa-solid fa-circle-info"></i> Info, costo e pagamento
+          </button>
         </div>
         <div id="lic-state" class="text-[11px] leading-relaxed rounded-lg p-2 border"></div>
         <label class="block text-[10px] font-bold text-slate-400 uppercase">Codice di questa installazione</label>
@@ -1748,14 +1810,33 @@
 
     const LIC_CONTATTO_EMAIL = 'info@mitconsulting.eu';
     const LIC_CONTATTO_WHATSAPP = '393485484003'; // con prefisso internazionale, senza + e spazi
+    const LIC_PREZZO = '50 € + IVA';
 
     function installIdMessage() {
       const st = licenseStatus();
       const azione = st.stato === 'attiva' || st.stato === 'scaduta' ? 'il rinnovo della' : 'la';
-      return `Buongiorno, richiedo ${azione} licenza annuale di Gestione HACCP.\n\n` +
+      return `Buongiorno, richiedo ${azione} licenza annuale di Gestione HACCP (${LIC_PREZZO}).\n\n` +
         `Attività: ${companyConfig.companyName || '-'}\n` +
         `Codice installazione: ${licenza.id}\n` +
-        (licenzaDati ? `Licenza attuale valida fino al: ${formatDate(licenzaDati.d)}\n` : '');
+        (licenzaDati ? `Licenza attuale valida fino al: ${formatDate(licenzaDati.d)}\n` : '') +
+        `\nDati per la fattura:\n` +
+        `Ragione sociale: \n` +
+        `Partita IVA / Codice fiscale: \n` +
+        `Indirizzo sede: \n` +
+        `Codice SDI o PEC: \n\n` +
+        `Vi chiedo di inviarmi l'IBAN per il bonifico. Grazie.`;
+    }
+
+    function openLicenseInfo() {
+      document.getElementById('lic-info-prezzo').textContent = LIC_PREZZO;
+      document.getElementById('lic-info-id').textContent = licenza ? licenza.id : '—';
+      document.getElementById('lic-info-contatti').textContent =
+        `${LIC_CONTATTO_EMAIL} · WhatsApp +${LIC_CONTATTO_WHATSAPP.replace(/^39/, '39 ').replace(/(\d{3})(\d{3})(\d+)$/, '$1 $2 $3')}`;
+      document.getElementById('lic-info-modal').classList.remove('hidden');
+    }
+
+    function closeLicenseInfo() {
+      document.getElementById('lic-info-modal').classList.add('hidden');
     }
 
     function sendInstallId(canale) {
