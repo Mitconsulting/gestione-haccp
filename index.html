@@ -269,6 +269,7 @@
         </div>
       </div>
       <div class="ml-auto flex items-center gap-2 flex-shrink-0">
+        <button type="button" id="chip-licenza" onclick="openLicenseSettings()" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border"><i id="chip-licenza-icon" class="fa-solid fa-key"></i> <span id="chip-licenza-text" class="hidden sm:inline"></span><span id="chip-licenza-short" class="sm:hidden"></span></button>
         <span id="chip-offline" class="hidden items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-emerald-500/15 text-emerald-400"><i class="fa-solid fa-circle-check"></i> Funziona offline</span>
         <button type="button" id="chip-backup" onclick="exportFullBackup()" title="Scarica un backup" class="hidden md:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold bg-cardBg border border-cardBorder text-slate-400"><i class="fa-solid fa-cloud-arrow-down"></i> <span id="chip-backup-text">Backup</span></button>
         <button type="button" onclick="toggleTheme()" class="w-11 h-11 rounded-xl bg-cardBg border border-cardBorder text-slate-400 flex items-center justify-center active:scale-95" title="Tema chiaro / scuro">
@@ -276,6 +277,13 @@
         </button>
       </div>
     </header>
+
+    <!-- AVVISO LICENZA (prova in scadenza o sola lettura) -->
+    <div id="license-banner" class="hidden rounded-xl p-3 mb-3 text-xs flex items-center gap-3 border">
+      <i id="license-banner-icon" class="fa-solid fa-key text-lg flex-shrink-0"></i>
+      <span id="license-banner-text" class="flex-1 min-w-0 leading-snug"></span>
+      <button type="button" onclick="openLicenseSettings()" class="flex-shrink-0 px-3 py-2 rounded-lg font-extrabold bg-emerald-500 text-slate-950 active:scale-95">Attiva licenza</button>
+    </div>
 
     <!-- AVVISO ARCHIVIO NON DISPONIBILE -->
     <div id="storage-error-banner" class="bg-rose-500/10 border border-rose-500/40 rounded-xl p-2.5 mb-3 text-[11px] text-rose-300 hidden">
@@ -995,6 +1003,27 @@
         <i class="fa-solid fa-address-book text-emerald-400"></i> Fornitori, prodotti e ricette
       </button>
 
+      <!-- LICENZA D'USO -->
+      <div id="lic-section" class="pt-3 border-t border-cardBorder space-y-2">
+        <div class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+          <i class="fa-solid fa-key"></i> Licenza d'uso
+        </div>
+        <div id="lic-state" class="text-[11px] leading-relaxed rounded-lg p-2 border"></div>
+        <label class="block text-[10px] font-bold text-slate-400 uppercase">Codice di questa installazione</label>
+        <div class="flex gap-2">
+          <div id="lic-id" class="touch-target flex-1 min-w-0 flex items-center px-3 rounded-xl bg-inputBg border border-cardBorder font-mono font-bold text-sm text-slate-100 tracking-wider select-all"></div>
+          <button type="button" onclick="shareInstallId()" title="Copia o invia il codice" class="touch-target w-11 flex-shrink-0 rounded-xl bg-inputBg border border-cardBorder text-slate-300 flex items-center justify-center active:scale-95">
+            <i class="fa-solid fa-share-nodes"></i>
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-500 leading-normal">Comunica questo codice a MIT Consulting per ricevere o rinnovare la licenza. La licenza vale solo per questo tablet.</p>
+        <textarea id="lic-code" rows="3" placeholder="Incolla qui il codice licenza ricevuto (inizia con GHL1.)" class="w-full bg-inputBg border border-cardBorder rounded-xl p-2 text-[11px] font-mono text-slate-100 focus:outline-none focus:border-emerald-400 break-all"></textarea>
+        <button type="button" onclick="activateLicenseFromInput()" class="w-full py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-unlock"></i> Attiva licenza
+        </button>
+        <p id="lic-msg" class="hidden text-[11px] font-bold leading-snug"></p>
+      </div>
+
       <!-- SEZIONE DEDICATA BACKUP E RIPRISTINO SICUREZZA DATI -->
       <div class="pt-3 border-t border-cardBorder space-y-2">
         <div class="text-xs font-extrabold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
@@ -1481,6 +1510,258 @@
       }
     }
 
+    /* ===== LICENZA D'USO (offline, firmata) =====
+       La licenza e' un testo "GHL1.<dati>.<firma>" firmato con la chiave privata di MIT Consulting
+       (ECDSA P-256) e verificato qui con la chiave pubblica. Vale solo per il codice installazione
+       indicato. Senza licenza: prova di LIC_PROVA_GIORNI giorni. Alla scadenza l'app va in sola
+       lettura: consultazione, stampa, export e backup restano sempre possibili. */
+    const LIC_PUBLIC_JWK = {"kty": "EC", "crv": "P-256", "x": "kFj3feFVPOB6qOLSNohfth5A4utb8yPKm8SbiLICjyI", "y": "7poDUK7FJjQzBJKkx7BTUEvMnb5ia87UosqxzHrZPME"};
+    const LIC_PROVA_GIORNI = 30;
+    const LIC_AVVISO_GIORNI = 30;
+    const LIC_BANNER_GIORNI = 7;
+    let licenza = null;      // { id, primoAvvio, ultimaData, codice, dati }
+    let licenzaDati = null;  // contenuto verificato della licenza: { i, n, d, e }
+
+    function b64urlToBytes(str) {
+      const b64 = str.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((str.length + 3) % 4);
+      const bin = atob(b64);
+      return Uint8Array.from(bin, c => c.charCodeAt(0));
+    }
+
+    function newInstallId() {
+      const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      let c = '';
+      crypto.getRandomValues(new Uint8Array(12)).forEach(b => { c += A[b % A.length]; });
+      return `GH-${c.slice(0, 4)}-${c.slice(4, 8)}-${c.slice(8)}`;
+    }
+
+    function addDaysIso(iso, n) {
+      const d = parseLocalDate(iso);
+      d.setDate(d.getDate() + n);
+      return toLocalISO(d);
+    }
+
+    function daysBetween(a, b) {
+      return Math.round((parseLocalDate(b) - parseLocalDate(a)) / 86400000);
+    }
+
+    async function verifyLicenseCode(code) {
+      const m = /^GHL1\.([A-Za-z0-9_-]+)\.([A-Za-z0-9_-]+)$/.exec(String(code || '').replace(/\s+/g, ''));
+      if (!m) throw new Error('Il testo inserito non è un codice licenza (deve iniziare con GHL1.).');
+      if (!(window.crypto && crypto.subtle)) throw new Error("Questo browser non può verificare la licenza: apri l'app dal suo indirizzo https.");
+      let p;
+      try {
+        const data = b64urlToBytes(m[1]);
+        const key = await crypto.subtle.importKey('jwk', LIC_PUBLIC_JWK, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+        const ok = await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, key, b64urlToBytes(m[2]), data);
+        if (!ok) throw new Error('firma');
+        p = JSON.parse(new TextDecoder().decode(data));
+      } catch (e) {
+        throw new Error('Codice licenza non valido o incompleto: copialo di nuovo per intero.');
+      }
+      if (p.v !== 1 || !p.i || !/^\d{4}-\d{2}-\d{2}$/.test(p.d)) throw new Error('Licenza non riconosciuta da questa versione dell\'app.');
+      return p;
+    }
+
+    /* Se l'orologio del tablet viene spostato indietro vale l'ultima data già vista */
+    function licenseToday() {
+      const t = todayLocal();
+      return licenza && licenza.ultimaData > t ? licenza.ultimaData : t;
+    }
+
+    function licenseStatus() {
+      if (!licenza) return { stato: 'nd', sola: false }; // archivio illeggibile: non si blocca nulla
+      const oggi = licenseToday();
+      if (licenzaDati) {
+        const g = daysBetween(oggi, licenzaDati.d);
+        return { stato: g >= 0 ? 'attiva' : 'scaduta', giorni: g, scadenza: licenzaDati.d, nome: licenzaDati.n, sola: g < 0 };
+      }
+      const fine = addDaysIso(licenza.primoAvvio, LIC_PROVA_GIORNI - 1);
+      const g = daysBetween(oggi, fine);
+      return { stato: g >= 0 ? 'prova' : 'prova_scaduta', giorni: g, scadenza: fine, sola: g < 0 };
+    }
+
+    function isReadOnly() {
+      return licenseStatus().sola;
+    }
+
+    async function initLicense() {
+      const oggi = todayLocal();
+      licenza = await storeGet('licenza');
+      if (!licenza || !licenza.id) licenza = { id: newInstallId(), primoAvvio: oggi, ultimaData: oggi };
+      if (!licenza.ultimaData || oggi > licenza.ultimaData) licenza.ultimaData = oggi;
+      await storeSet('licenza', licenza);
+      licenzaDati = null;
+      if (licenza.codice) {
+        try {
+          const p = await verifyLicenseCode(licenza.codice);
+          if (p.i === licenza.id) licenzaDati = p;
+        } catch (e) {
+          // Senza WebCrypto (indirizzo non https) vale la licenza già verificata all'attivazione
+          if (!(window.crypto && crypto.subtle) && licenza.dati && licenza.dati.i === licenza.id) licenzaDati = licenza.dati;
+        }
+      }
+      updateLicenseUi();
+    }
+
+    function touchLicenseDate() {
+      if (!licenza) return;
+      const oggi = todayLocal();
+      if (oggi > licenza.ultimaData) {
+        licenza.ultimaData = oggi;
+        storeSet('licenza', licenza).catch(() => {});
+      }
+    }
+
+    /* Da chiamare prima di ogni operazione che scrive nel registro */
+    function checkWritable() {
+      touchLicenseDate();
+      const st = licenseStatus();
+      updateLicenseUi();
+      if (!st.sola) return true;
+      showToast(st.stato === 'prova_scaduta' ? 'Prova terminata: app in sola lettura' : 'Licenza scaduta: app in sola lettura');
+      openLicenseSettings();
+      return false;
+    }
+
+    function updateLicenseUi() {
+      const st = licenseStatus();
+      const chip = document.getElementById('chip-licenza');
+      const banner = document.getElementById('license-banner');
+      const AMBER = ['bg-amber-500/15', 'text-amber-500', 'border-amber-500/40'];
+      const RED = ['bg-rose-500/15', 'text-rose-400', 'border-rose-500/40'];
+      chip.classList.remove(...AMBER, ...RED);
+      banner.classList.remove(...AMBER, ...RED);
+      document.body.classList.toggle('sola-lettura', st.sola);
+
+      let chipTxt = '', chipShort = '', bannerTxt = '', colore = AMBER;
+      if (st.stato === 'prova') {
+        const n = st.giorni + 1;
+        chipTxt = `Prova: ${n} ${n === 1 ? 'giorno' : 'giorni'}`;
+        chipShort = `${n} gg`;
+        if (st.giorni < LIC_BANNER_GIORNI) bannerTxt = `<strong>Periodo di prova: ${st.giorni === 0 ? 'oggi è l\'ultimo giorno' : `restano ${n} giorni`}.</strong> Poi l'app passa in sola lettura finché non attivi la licenza.`;
+      } else if (st.stato === 'attiva' && st.giorni < LIC_AVVISO_GIORNI) {
+        chipTxt = st.giorni === 0 ? 'Licenza: scade oggi' : `Licenza: ${st.giorni} gg`;
+        chipShort = st.giorni === 0 ? 'oggi' : `${st.giorni} gg`;
+        if (st.giorni < LIC_BANNER_GIORNI) bannerTxt = `<strong>La licenza scade il ${formatDate(st.scadenza)}.</strong> Chiedi il rinnovo a MIT Consulting per continuare a registrare.`;
+      } else if (st.sola) {
+        colore = RED;
+        chipTxt = 'Sola lettura';
+        bannerTxt = `<strong>${st.stato === 'prova_scaduta' ? 'Periodo di prova terminato' : `Licenza scaduta il ${formatDate(st.scadenza)}`}: app in sola lettura.</strong> ` +
+          'Puoi consultare, stampare ed esportare il registro; per registrare nuovi ricevimenti attiva la licenza.';
+      }
+
+      chip.classList.toggle('hidden', !chipTxt);
+      chip.classList.toggle('inline-flex', !!chipTxt);
+      chip.classList.add(...colore);
+      document.getElementById('chip-licenza-text').textContent = chipTxt;
+      document.getElementById('chip-licenza-short').textContent = chipShort;
+      document.getElementById('chip-licenza-icon').className = 'fa-solid ' + (st.sola ? 'fa-lock' : 'fa-key');
+      banner.classList.toggle('hidden', !bannerTxt);
+      banner.classList.add(...colore);
+      document.getElementById('license-banner-text').innerHTML = bannerTxt;
+    }
+
+    function renderLicenseSection() {
+      const box = document.getElementById('lic-state');
+      box.classList.remove('bg-emerald-500/10', 'border-emerald-500/30', 'bg-amber-500/10', 'border-amber-500/40', 'bg-rose-500/10', 'border-rose-500/40');
+      if (!licenza) {
+        box.textContent = "Archivio non leggibile: stato della licenza non disponibile.";
+        document.getElementById('lic-id').textContent = '—';
+        return;
+      }
+      document.getElementById('lic-id').textContent = licenza.id;
+      const st = licenseStatus();
+      let html, cls;
+      if (st.stato === 'attiva') {
+        cls = st.giorni < LIC_AVVISO_GIORNI ? ['bg-amber-500/10', 'border-amber-500/40'] : ['bg-emerald-500/10', 'border-emerald-500/30'];
+        html = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-circle-check"></i> Licenza attiva</span><br>` +
+          `Intestata a <strong>${escapeHtml(st.nome || '')}</strong> · valida fino al <strong>${formatDate(st.scadenza)}</strong>` +
+          (st.giorni < LIC_AVVISO_GIORNI ? ` <span class="text-amber-500 font-bold">(${st.giorni === 0 ? 'scade oggi' : `mancano ${st.giorni} giorni`})</span>` : '');
+      } else if (st.stato === 'prova') {
+        cls = ['bg-amber-500/10', 'border-amber-500/40'];
+        html = `<span class="text-amber-500 font-bold"><i class="fa-solid fa-hourglass-half"></i> Periodo di prova</span><br>` +
+          `Iniziato il ${formatDate(licenza.primoAvvio)}, termina il <strong>${formatDate(st.scadenza)}</strong>. Poi l'app passa in sola lettura.`;
+      } else {
+        cls = ['bg-rose-500/10', 'border-rose-500/40'];
+        html = `<span class="text-rose-400 font-bold"><i class="fa-solid fa-lock"></i> ${st.stato === 'prova_scaduta' ? 'Prova terminata' : 'Licenza scaduta'} il ${formatDate(st.scadenza)}</span><br>` +
+          'App in sola lettura: il registro resta consultabile, stampabile ed esportabile.';
+      }
+      box.classList.add(...cls);
+      box.innerHTML = html;
+    }
+
+    function setLicenseMsg(txt, ok) {
+      const el = document.getElementById('lic-msg');
+      el.textContent = txt;
+      el.className = 'text-[11px] font-bold leading-snug ' + (ok ? 'text-emerald-400' : 'text-rose-400');
+    }
+
+    async function activateLicenseFromInput() {
+      const code = document.getElementById('lic-code').value.replace(/\s+/g, '');
+      if (!code) {
+        setLicenseMsg('Incolla prima il codice licenza.', false);
+        return false;
+      }
+      if (!licenza) {
+        setLicenseMsg("Archivio del tablet non disponibile: chiudi e riapri l'app, poi riprova.", false);
+        return false;
+      }
+      try {
+        const p = await verifyLicenseCode(code);
+        if (p.i !== licenza.id) throw new Error(`Questa licenza è di un'altra installazione (${p.i}). Il codice di questo tablet è ${licenza.id}.`);
+        if (p.d < licenseToday()) throw new Error(`Questa licenza è già scaduta il ${formatDate(p.d)}.`);
+        licenza.codice = code;
+        licenza.dati = p;
+        licenza.attivata = new Date().toISOString();
+        await storeSet('licenza', licenza);
+        licenzaDati = p;
+        document.getElementById('lic-code').value = '';
+        updateLicenseUi();
+        renderLicenseSection();
+        setLicenseMsg(`Licenza attivata: valida fino al ${formatDate(p.d)}.`, true);
+        showToast('Licenza attivata');
+        return true;
+      } catch (e) {
+        setLicenseMsg(e.message || String(e), false);
+        return false;
+      }
+    }
+
+    function openLicenseSettings() {
+      openSettingsModal();
+      setTimeout(() => document.getElementById('lic-section').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+
+    async function shareInstallId() {
+      if (!licenza) return;
+      const nome = companyConfig.companyName ? ` (${companyConfig.companyName})` : '';
+      const testo = `Codice installazione Gestione HACCP${nome}: ${licenza.id}`;
+      if (navigator.share) {
+        try { await navigator.share({ title: 'Codice installazione', text: testo }); return; } catch (e) { if (e && e.name === 'AbortError') return; }
+      }
+      try {
+        await navigator.clipboard.writeText(licenza.id);
+        showToast('Codice copiato negli appunti');
+      } catch (e) {
+        showToast('Codice: ' + licenza.id);
+      }
+    }
+
+    /* Attivazione dal link ricevuto: ...#licenza=GHL1.xxx.yyy */
+    async function handleLicenseLink() {
+      const m = /[#&]licenza=([^&]+)/.exec(location.hash);
+      if (!m) return;
+      history.replaceState(null, '', location.pathname + location.search);
+      if (!licenza) return;
+      // Alla prima configurazione la finestra di benvenuto resta in primo piano
+      const primaConfig = !companyConfig.companyName;
+      if (!primaConfig) openLicenseSettings();
+      document.getElementById('lic-code').value = decodeURIComponent(m[1]);
+      const ok = await activateLicenseFromInput();
+      if (!ok && primaConfig) alert('Licenza non attivata: ' + document.getElementById('lic-msg').textContent);
+    }
+
     /* ===== AVVIO ===== */
     document.addEventListener('DOMContentLoaded', init);
 
@@ -1506,6 +1787,10 @@
           : "Impossibile leggere l'archivio del tablet: " + (e && e.message ? e.message : e));
       }
 
+      if (storageOk) {
+        try { await initLicense(); } catch (e) { console.warn('Licenza non leggibile', e); }
+      }
+
       applyCompanyConfig();
       applyDefaultOperator();
       renderAnagraficheDatalists();
@@ -1527,6 +1812,7 @@
       await restoreLabelDraft();
       checkBackupReminder();
       if (!companyConfig.companyName) openSetupModal();
+      await handleLicenseLink();
 
       requestPersistentStorage();
     }
@@ -2615,6 +2901,7 @@
     /* ===== REGISTRAZIONE RICEVIMENTO ===== */
     async function saveEntry(e) {
       e.preventDefault();
+      if (!checkWritable()) return;
 
       const t = evaluateTemperature();
       if (t.required && !t.valid) {
@@ -2907,6 +3194,7 @@
     async function annullaEntry(id) {
       const item = registryData.find(i => i.id === id);
       if (!item) return;
+      if (!checkWritable()) return;
       const motivo = prompt(`Annullare la registrazione "${item.nome_prodotto}" (lotto ${item.lotto})?\nIl record resterà nel registro come ANNULLATO.\n\nIndica il motivo (obbligatorio):`);
       if (motivo === null) return;
       if (!motivo.trim()) {
@@ -2973,6 +3261,7 @@
 
     function generateLabelPreview(e) {
       if (e) e.preventDefault();
+      if (e && !checkWritable()) return;
 
       const prodDate = document.getElementById('lbl_data_prod').value;
       const scadDate = document.getElementById('lbl_data_scad').value;
@@ -3112,6 +3401,7 @@
     }
 
     function printLabel() {
+      if (!checkWritable()) return;
       printWithMode('print-label', 'margin: 2mm;');
     }
 
@@ -3697,6 +3987,7 @@
         "INSTALLAZIONE PULITA\n\n" +
         `Verranno cancellati da questo tablet: registro (${registryData.length} record), impostazioni ` +
         "(nome attività, operatore, email, limiti di temperatura), elenchi di fornitori, prodotti e ricette, bozze.\n" +
+        "La licenza d'uso di questo tablet resta attiva.\n" +
         "Prima verrà scaricato automaticamente un backup completo.\n\n" +
         "Per confermare scrivi CANCELLA TUTTO:"
       );
@@ -3708,7 +3999,9 @@
 
       await exportFullBackup();
       try {
+        const licSalvata = await storeGet('licenza');
         await storeClearAll();
+        if (licSalvata) await storeSet('licenza', licSalvata);
       } catch (e) {
         showStorageError("Cancellazione non riuscita: " + (e && e.message ? e.message : e) + ". Chiudi e riapri l'app e riprova.");
         return;
@@ -3948,6 +4241,8 @@
       document.getElementById('cfg-temp-fresco').value = companyConfig.tempMaxFresco;
       document.getElementById('cfg-temp-surgelato').value = companyConfig.tempMaxSurgelato;
       renderStorageStatus();
+      renderLicenseSection();
+      document.getElementById('lic-msg').classList.add('hidden');
       document.getElementById('settings-modal').classList.remove('opacity-0', 'pointer-events-none');
     }
 

@@ -23,8 +23,18 @@ Su iPad, Safari può cancellare i dati dei siti **non installati** dopo 7 giorni
 Al primo avvio l'app chiede il **nome dell'attività**, mostrato in intestazione, etichette, schede audit ed export. Nella stessa schermata si possono indicare anche l'operatore predefinito e l'email del consulente HACCP, oppure ripristinare un backup esistente. Tutto si può modificare in seguito dalle Impostazioni.
 Il nome sotto l'icona del tablet è "Gestione HACCP"; con Chrome su Android si può cambiare al momento dell'installazione.
 
+## Licenza d'uso
+Ogni installazione ha un **codice installazione** (`GH-XXXX-XXXX-XXXX`), visibile in Impostazioni → *Licenza d'uso*.
+- Senza licenza l'app funziona completa per **30 giorni di prova** dal primo avvio (per le installazioni già in uso, dal primo avvio dopo l'aggiornamento).
+- La licenza è un codice firmato (`GHL1.…`) valido solo per quel codice installazione. Si attiva aprendo sul tablet il link ricevuto, oppure incollando il codice in Impostazioni → *Attiva licenza*. Il rinnovo si fa allo stesso modo con una nuova licenza.
+- Avvisi: chip in intestazione negli ultimi 30 giorni, banner negli ultimi 7.
+- Alla scadenza l'app va in **sola lettura**: non si possono registrare, annullare né stampare etichette, ma si possono sempre consultare, stampare ed esportare il registro e fare il backup.
+- Se l'orologio del tablet viene spostato indietro, vale l'ultima data già vista.
+- "Cancella tutti i dati" conserva licenza e periodo di prova. Il backup non contiene la licenza: su un altro tablet serve una nuova licenza.
+- Le licenze si generano con lo strumento privato fuori da questa cartella (non pubblicato).
+
 ## Aggiornare l'app
-Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.20`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
+Sostituisci i file sul server e incrementa la costante `CACHE` in `sw.js` (es. `gestione-haccp-v1.2.21`). Il tablet riceve l'aggiornamento alla prima apertura con rete. I dati non vengono toccati.
 
 ## Novità rispetto alla v1.1
 - Archivio IndexedDB al posto di localStorage, archiviazione persistente e stato dell'archivio nelle Impostazioni.
