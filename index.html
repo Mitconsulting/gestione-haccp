@@ -1016,7 +1016,20 @@
             <i class="fa-solid fa-share-nodes"></i>
           </button>
         </div>
-        <p class="text-[10px] text-slate-500 leading-normal">Comunica questo codice a MIT Consulting per ricevere o rinnovare la licenza. La licenza vale solo per questo tablet.</p>
+        <p class="text-[10px] text-slate-500 leading-normal">
+          Invia questo codice a <strong class="text-slate-300">MIT Consulting</strong> per ricevere o rinnovare la licenza:
+          email <a href="mailto:info@mitconsulting.eu" class="font-bold text-emerald-400 underline">info@mitconsulting.eu</a>
+          oppure WhatsApp <a href="https://wa.me/3934854840003" target="_blank" rel="noopener" class="font-bold text-emerald-400 underline">+39 348 548 40003</a>.
+          La licenza vale solo per questo tablet.
+        </p>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="button" onclick="sendInstallId('email')" class="py-2.5 bg-inputBg border border-cardBorder text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+            <i class="fa-solid fa-envelope text-emerald-400"></i> Invia via email
+          </button>
+          <button type="button" onclick="sendInstallId('whatsapp')" class="py-2.5 bg-inputBg border border-cardBorder text-slate-200 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
+            <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> Invia su WhatsApp
+          </button>
+        </div>
         <textarea id="lic-code" rows="3" placeholder="Incolla qui il codice licenza ricevuto (inizia con GHL1.)" class="w-full bg-inputBg border border-cardBorder rounded-xl p-2 text-[11px] font-mono text-slate-100 focus:outline-none focus:border-emerald-400 break-all"></textarea>
         <button type="button" onclick="activateLicenseFromInput()" class="w-full py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold flex items-center justify-center gap-2 active:scale-95">
           <i class="fa-solid fa-unlock"></i> Attiva licenza
@@ -1731,6 +1744,29 @@
     function openLicenseSettings() {
       openSettingsModal();
       setTimeout(() => document.getElementById('lic-section').scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+    }
+
+    const LIC_CONTATTO_EMAIL = 'info@mitconsulting.eu';
+    const LIC_CONTATTO_WHATSAPP = '3934854840003'; // con prefisso internazionale, senza + e spazi
+
+    function installIdMessage() {
+      const st = licenseStatus();
+      const azione = st.stato === 'attiva' || st.stato === 'scaduta' ? 'il rinnovo della' : 'la';
+      return `Buongiorno, richiedo ${azione} licenza annuale di Gestione HACCP.\n\n` +
+        `Attività: ${companyConfig.companyName || '-'}\n` +
+        `Codice installazione: ${licenza.id}\n` +
+        (licenzaDati ? `Licenza attuale valida fino al: ${formatDate(licenzaDati.d)}\n` : '');
+    }
+
+    function sendInstallId(canale) {
+      if (!licenza) return;
+      const testo = installIdMessage();
+      if (canale === 'whatsapp') {
+        window.open(`https://wa.me/${LIC_CONTATTO_WHATSAPP}?text=${encodeURIComponent(testo)}`, '_blank', 'noopener');
+      } else {
+        const oggetto = `Licenza Gestione HACCP - ${licenza.id}`;
+        location.href = `mailto:${LIC_CONTATTO_EMAIL}?subject=${encodeURIComponent(oggetto)}&body=${encodeURIComponent(testo)}`;
+      }
     }
 
     async function shareInstallId() {
