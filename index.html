@@ -1008,12 +1008,12 @@
 
   <!-- SETTINGS & DATA SECURITY MODAL -->
   <div class="fixed inset-0 modal-overlay backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200" id="settings-modal">
-    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between border-b border-cardBorder pb-2">
+    <div class="bg-cardBg border border-cardBorder rounded-2xl w-full max-w-md p-4 space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto overflow-x-hidden">
+      <div class="sticky -top-4 z-10 -mx-4 -mt-4 px-4 pt-4 pb-2 bg-cardBg flex items-center justify-between gap-2 border-b border-cardBorder">
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-gear text-emerald-400"></i> Impostazioni & Sicurezza Dati
         </h3>
-        <button onclick="closeSettingsModal()" class="text-slate-400 text-lg px-1">&times;</button>
+        <button type="button" onclick="closeSettingsModal()" title="Esci" aria-label="Esci" class="w-11 h-11 flex-shrink-0 rounded-xl bg-inputBg border border-cardBorder text-slate-300 flex items-center justify-center text-2xl active:scale-95"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div class="space-y-3">
@@ -1133,9 +1133,14 @@
         </div>
       </div>
 
-      <button onclick="saveSettings()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
-        <i class="fa-solid fa-check"></i> SALVA IMPOSTAZIONI
-      </button>
+      <div class="sticky -bottom-4 z-10 -mx-4 -mb-4 px-4 pt-3 pb-4 bg-cardBg border-t border-cardBorder grid grid-cols-[1fr_2fr] gap-2">
+        <button type="button" onclick="closeSettingsModal()" class="touch-target bg-inputBg border border-cardBorder text-slate-200 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-arrow-left"></i> ESCI
+        </button>
+        <button onclick="saveSettings()" class="touch-target bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-95">
+          <i class="fa-solid fa-check"></i> SALVA IMPOSTAZIONI
+        </button>
+      </div>
     </div>
   </div>
 
@@ -1146,7 +1151,7 @@
         <h3 class="text-sm font-extrabold text-slate-100 flex items-center gap-2">
           <i class="fa-solid fa-address-book text-emerald-400"></i> Fornitori, prodotti e ricette
         </h3>
-        <button onclick="closeAnagrafiche()" class="text-slate-400 text-lg px-1">&times;</button>
+        <button type="button" onclick="closeAnagrafiche()" title="Esci" aria-label="Esci" class="w-11 h-11 flex-shrink-0 rounded-xl bg-inputBg border border-cardBorder text-slate-300 flex items-center justify-center text-2xl active:scale-95"><i class="fa-solid fa-xmark"></i></button>
       </div>
 
       <div class="grid grid-cols-3 gap-1.5 p-1 bg-inputBg border border-cardBorder rounded-xl">
@@ -1167,9 +1172,10 @@
 
       <div id="anag-list" class="space-y-1.5 overflow-y-auto flex-1 pr-1"></div>
 
-      <button onclick="closeAnagrafiche()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2">
-        <i class="fa-solid fa-check"></i> FATTO
+      <button onclick="closeAnagrafiche()" class="touch-target w-full bg-emerald-500 text-slate-950 font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-95">
+        <i class="fa-solid fa-arrow-left"></i> ESCI
       </button>
+      <p class="text-[10px] text-slate-500 text-center -mt-1">Le modifiche agli elenchi sono già salvate.</p>
     </div>
   </div>
 
