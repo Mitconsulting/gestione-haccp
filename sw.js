@@ -1,6 +1,6 @@
 /* Service worker: rende l'app utilizzabile offline sul tablet.
    I DATI del registro non passano di qui: stanno in IndexedDB. */
-const CACHE = 'gestione-haccp-v1.2.23';
+const CACHE = 'gestione-haccp-v1.2.24';
 
 const APP_FILES = [
   './',

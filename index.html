@@ -1930,6 +1930,8 @@
       checkBackupReminder();
       if (!companyConfig.companyName) openSetupModal();
       await handleLicenseLink();
+      // Link aperto con l'app già caricata: cambia solo la parte dopo # e la pagina non si ricarica
+      window.addEventListener('hashchange', () => { handleLicenseLink(); });
 
       requestPersistentStorage();
     }
